@@ -41,6 +41,9 @@ const MAX_REPLACES = 10;
 let isRouletteActive = false;
 let draggedItemIndex = null;
 
+const urlParams = new URLSearchParams(window.location.search);
+let sharedBuild = null;
+
 async function loadData() {
   try {
     const [heroesRes, abilitiesRes, itemsRes] = await Promise.all([
@@ -146,7 +149,26 @@ async function loadData() {
     document.getElementById('generateBtn').textContent = 'Сгенерировать билд';
     document.getElementById('status').textContent = `Героев: ${heroesData.length}, предметов: ${regularItemsData.length}, ботинок: ${bootsData.length}`;
     console.log(`Загружено героев: ${heroesData.length}, обычных предметов: ${regularItemsData.length}, ботинок: ${bootsData.length}`);
-    generateBuildForRandomHero();
+
+    // Проверяем, есть ли build в URL
+    const buildParam = urlParams.get('build');
+    if (buildParam) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(buildParam))));
+        const hero = heroesData.find(h => h.name === decoded.heroName);
+        if (hero) {
+          currentBuild = { hero, items: decoded.items, buildOrder: decoded.buildOrder, talents: decoded.talents };
+          replaceCount = 0;
+          renderBuild();
+          document.getElementById('shareBtn').classList.remove('hidden');
+        }
+      } catch (e) {
+        console.warn('Не удалось восстановить билд из URL:', e);
+        generateBuildForRandomHero();
+      }
+    } else {
+      generateBuildForRandomHero();
+    }
   } catch (e) {
     console.error(e);
     document.getElementById('status').textContent = `Ошибка: ${e.message}`;
@@ -223,6 +245,7 @@ function generateBuildForRandomHero() {
   replaceCount = 0;
   closeModal();
   renderBuild();
+  document.getElementById('shareBtn').classList.remove('hidden');
 }
 
 function replaceItem(index) {
@@ -291,6 +314,12 @@ function renderBuild() {
   });
 
   html += `</div></div>`;
+
+  // Кнопка "Поделиться" под талантами, по центру
+  html += `<div class="section" style="text-align: center;">
+              <button id="shareBtn" class="hidden">🔗 Поделиться билдом</button>
+           </div>`;
+
   document.getElementById('result').innerHTML = html;
   attachDragAndDropHandlers();
 }
@@ -341,6 +370,24 @@ function attachDragAndDropHandlers() {
     const items = currentBuild.items;
     [items[draggedItemIndex], items[targetIndex]] = [items[targetIndex], items[draggedItemIndex]];
     renderBuild();
+  });
+}
+
+function shareBuild() {
+  if (!currentBuild) return;
+  const data = {
+    heroName: currentBuild.hero.name,
+    items: currentBuild.items,
+    buildOrder: currentBuild.buildOrder,
+    talents: currentBuild.talents
+  };
+  const json = JSON.stringify(data);
+  const encoded = btoa(unescape(encodeURIComponent(json)));
+  const url = `${window.location.origin}${window.location.pathname}?build=${encoded}`;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('Ссылка скопирована в буфер обмена!');
+  }).catch(() => {
+    prompt('Скопируйте ссылку:', url);
   });
 }
 
@@ -404,7 +451,7 @@ function startRoulette() {
     if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio = null; }
     rouletteAudio = new Audio(ROULETTE_SOUND_FILE);
     rouletteAudio.loop = true;
-    rouletteAudio.volume = 0.2;
+    rouletteAudio.volume = 0.8;
     rouletteAudio.play()
       .then(() => console.log('Звук запущен'))
       .catch(e => console.warn('Звук не воспроизведён:', e.message));
@@ -431,6 +478,7 @@ document.getElementById('startBuildBtn').addEventListener('click', function() {
   if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio.currentTime = 0; rouletteAudio = null; }
   document.getElementById('casinoBg').classList.remove('show');
   renderBuild();
+  document.getElementById('shareBtn').classList.remove('hidden');
   isRouletteActive = false;
 });
 
@@ -456,6 +504,12 @@ function showModal() { modal.classList.add('show'); }
 function closeModal() { modal.classList.remove('show'); }
 closeModalBtn.addEventListener('click', closeModal);
 window.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'shareBtn') {
+    shareBuild();
+  }
+});
 
 document.getElementById('result').addEventListener('click', e => {
   const btn = e.target.closest('.replace-item-btn');
