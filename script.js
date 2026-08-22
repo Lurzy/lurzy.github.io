@@ -1,520 +1,704 @@
-const heroesUrl = 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/heroes.json';
-const abilitiesUrl = 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/abilities.json';
-const heroAbilitiesUrl = 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/hero_abilities.json';
-const itemsUrl = 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/items.json';
-
-const CDN_BASE = 'https://cdn.cloudflare.steamstatic.com';
-const ROULETTE_SOUND_FILE = 'roulette_sound.mp3';
-
-const ALLOWED_ITEM_KEYS = new Set([
-  'soul_ring', 'orb_of_corrosion', 'falcon_blade', 'power_treads', 'phase_boots', 'travel_boots',
-  'mask_of_madness', 'hand_of_midas', 'helm_of_the_dominator', 'moon_shard', 'helm_of_the_overlord', 'travel_boots_2',
-  'urn_of_shadows', 'tranquil_boots', 'pavise', 'arcane_boots', 'drum', 'mekansm', 'vladmir', 'spirit_vessel',
-  'pipe', 'guardian_greaves', 'crimson_guard', 'boots_of_bearing', 'holy_locket', 'solar_crest',
-  'veil_of_discord', 'glimmer_cape', 'force_staff', 'aether_lens', 'witch_blade', 'cyclone', 'rod_of_atos',
-  'orchid', 'ultimate_scepter', 'nullifier', 'kaya', 'ethereal_blade', 'dagon', 'kaya_and_yasha', 'sange_and_kaya',
-  'bloodstone', 'refresher', 'sheepstick', 'octarine_core', 'wind_waker', 'specialists_array',
-  'vanguard', 'blade_mail', 'mage_slayer', 'soul_booster', 'eternal_shroud', 'lotus_orb', 'black_king_bar',
-  'hurricane_pike', 'sphere', 'aeon_disk', 'shivas_guard', 'manta', 'heart', 'assault', 'bloodthorn',
-  'crystalys', 'meteor_hammer', 'armlet', 'basher', 'shadow_blade', 'bfury', 'monkey_king_bar', 'maelstrom',
-  'diffusal_blade', 'desolator', 'heavens_halberd', 'sange', 'yasha', 'sange_and_yasha', 'echo_sabre',
-  'silver_edge', 'radiance', 'abyssal_blade', 'disperser', 'greater_crit',
-  'dragon_lance', 'kaya_and_sange', 'harpoon', 'satanic', 'khanda', 'mjollnir', 'skadi', 'butterfly',
-  'rapier', 'parasma', 'overwhelming_blink', 'swift_blink', 'arcane_blink', 'hydras_breath', 'blink',
-  'boots',
-  'aghanims_shard'
-]);
-
-const BOOTS_ITEM_KEYS = new Set([
-  'arcane_boots', 'travel_boots', 'travel_boots_2', 'boots', 'boots_of_bearing', 'tranquil_boots', 'phase_boots', 'power_treads'
-]);
-
-let rouletteAudio = null;
-let heroesData = [];
-let bootsData = [];
-let regularItemsData = [];
-let isDataLoaded = false;
-
-let currentBuild = null;
-let replaceCount = 0;
-const MAX_REPLACES = 10;
-let isRouletteActive = false;
-let draggedItemIndex = null;
-
-const urlParams = new URLSearchParams(window.location.search);
-let sharedBuild = null;
-
-async function loadData() {
-  try {
-    const [heroesRes, abilitiesRes, itemsRes] = await Promise.all([
-      fetch(heroesUrl), fetch(abilitiesUrl), fetch(itemsUrl)
-    ]);
-    if (!heroesRes.ok || !abilitiesRes.ok || !itemsRes.ok) throw new Error('Основные данные не загрузились');
-
-    const heroesObj = await heroesRes.json();
-    const heroes = Array.isArray(heroesObj) ? heroesObj : Object.values(heroesObj);
-    const abilities = await abilitiesRes.json();
-    const items = await itemsRes.json();
-
-    let heroAbilities = null;
-    try {
-      const res = await fetch(heroAbilitiesUrl);
-      if (res.ok) heroAbilities = await res.json();
-      else console.warn('hero_abilities.json недоступен, используется fallback');
-    } catch (e) { console.warn('hero_abilities.json ошибка', e); }
-
-    heroesData = heroes.map(hero => {
-      const heroName = hero.name;
-      let skills = [], talents = {};
-
-      if (heroAbilities && heroAbilities[heroName]) {
-        const abilitiesList = heroAbilities[heroName].abilities || [];
-        const talentsData = heroAbilities[heroName].talents || [];
-        const genericIndex = abilitiesList.findIndex(n => n.includes('generic_hidden'));
-        let normals = [], ultName = null;
-
-        if (genericIndex !== -1) {
-          normals = abilitiesList.slice(0, genericIndex).filter(n => !n.includes('generic'));
-          const after = abilitiesList.slice(genericIndex + 1).filter(n => !n.includes('generic'));
-          if (after.length) ultName = after[after.length - 1];
-        } else {
-          const all = abilitiesList.filter(n => !n.includes('generic'));
-          if (all.length) { ultName = all[all.length - 1]; normals = all.slice(0, -1); }
-        }
-
-        normals.forEach(name => {
-          const ab = abilities[name];
-          if (!ab) return;
-          skills.push({ name: ab.dname || name, maxLevel: ab.max_level || 4, isUltimate: false, img: ab.img ? CDN_BASE + ab.img : null, key: name });
-        });
-        if (ultName) {
-          const ab = abilities[ultName];
-          if (ab) skills.push({ name: ab.dname || ultName, maxLevel: ab.max_level || 3, isUltimate: true, img: ab.img ? CDN_BASE + ab.img : null, key: ultName });
-        }
-
-        talentsData.forEach(t => {
-          const level = 10 + (t.level - 1) * 5;
-          const ab = abilities[t.name];
-          const name = ab && ab.dname ? ab.dname : t.name;
-          if (!talents[level]) talents[level] = [];
-          talents[level].push(name);
-        });
-      } else {
-        // fallback
-        const short = heroName.replace('npc_dota_hero_', '');
-        const prefix = short + '_';
-        const keys = Object.keys(abilities);
-        const heroKeys = keys.filter(k => k.startsWith(prefix));
-        const nonGeneric = heroKeys.filter(k => !k.includes('generic'));
-        let ultName = null;
-        if (nonGeneric.length) { ultName = nonGeneric[nonGeneric.length - 1]; }
-        const normals = nonGeneric.filter(k => k !== ultName);
-        normals.forEach(name => {
-          const ab = abilities[name];
-          if (!ab) return;
-          skills.push({ name: ab.dname || name, maxLevel: ab.max_level || 4, isUltimate: false, img: ab.img ? CDN_BASE + ab.img : null, key: name });
-        });
-        if (ultName) {
-          const ab = abilities[ultName];
-          if (ab) skills.push({ name: ab.dname || ultName, maxLevel: ab.max_level || 3, isUltimate: true, img: ab.img ? CDN_BASE + ab.img : null, key: ultName });
-        }
-
-        const talentKeys = heroKeys.filter(k => k.startsWith('special_bonus_'));
-        talentKeys.sort((a,b) => keys.indexOf(a) - keys.indexOf(b));
-        const levels = [10,15,20,25];
-        for (let i=0; i<talentKeys.length && i/2<levels.length; i+=2) {
-          const lvl = levels[i/2];
-          const pair = talentKeys.slice(i, i+2).map(k => abilities[k]?.dname || k);
-          if (!talents[lvl]) talents[lvl] = [];
-          talents[lvl].push(...pair);
-        }
-      }
-
-      if (!skills.length) { console.warn(`Герой ${hero.name} без скиллов`); return null; }
-      const ultIndex = skills.findIndex(s => s.isUltimate);
-      if (ultIndex === -1) skills[skills.length - 1].isUltimate = true;
-
-      return { id: hero.id, name: hero.localized_name || hero.name, img: CDN_BASE + hero.img, skills, ultimateIndex: ultIndex, talents };
-    }).filter(h => h);
-
-    const allItems = Object.entries(items)
-      .filter(([k, it]) => ALLOWED_ITEM_KEYS.has(k.replace(/^item_/, '')) && it.dname && it.img)
-      .map(([k, it]) => ({ key: k.replace(/^item_/, ''), name: it.dname, img: CDN_BASE + it.img }));
-
-    bootsData = allItems.filter(i => BOOTS_ITEM_KEYS.has(i.key));
-    regularItemsData = allItems.filter(i => !BOOTS_ITEM_KEYS.has(i.key));
-
-    isDataLoaded = true;
-    document.getElementById('generateBtn').disabled = false;
-    document.getElementById('generateBtn').textContent = 'Сгенерировать билд';
-    document.getElementById('status').textContent = `Героев: ${heroesData.length}, предметов: ${regularItemsData.length}, ботинок: ${bootsData.length}`;
-    console.log(`Загружено героев: ${heroesData.length}, обычных предметов: ${regularItemsData.length}, ботинок: ${bootsData.length}`);
-
-    // Проверяем, есть ли build в URL
-    const buildParam = urlParams.get('build');
-    if (buildParam) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(buildParam))));
-        const hero = heroesData.find(h => h.name === decoded.heroName);
-        if (hero) {
-          currentBuild = { hero, items: decoded.items, buildOrder: decoded.buildOrder, talents: decoded.talents };
-          replaceCount = 0;
-          renderBuild();
-          document.getElementById('shareBtn').classList.remove('hidden');
-        }
-      } catch (e) {
-        console.warn('Не удалось восстановить билд из URL:', e);
-        generateBuildForRandomHero();
-      }
-    } else {
-      generateBuildForRandomHero();
-    }
-  } catch (e) {
-    console.error(e);
-    document.getElementById('status').textContent = `Ошибка: ${e.message}`;
-  }
+:root {
+    --bg-color: #0d0b1a;
+    --primary: #7c3aed;
+    --primary-light: #a855f7;
+    --primary-dark: #4c1d95;
+    --accent: #c084fc;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --card-bg: rgba(255, 255, 255, 0.06);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --gold: #fbbf24;
 }
 
-function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function randomElement(arr) { return arr[randomInt(0, arr.length - 1)]; }
-function getRandomItemsFromPool(pool, count) {
-  if (pool.length <= count) return pool.slice();
-  return [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--bg-color);
+    color: var(--text);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow-x: hidden;
 }
 
-function getNormalSkillMax(level) { return Math.ceil(level / 2); }
-function getUltimateLimit(level) {
-  if (level < 6) return 0;
-  if (level < 12) return 1;
-  if (level < 18) return 2;
-  return 3;
+/* Обычный градиентный фон */
+.background-animation {
+    position: fixed;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background: linear-gradient(135deg, #1e1b4b, #4c1d95, #0d0b1a, #2e1065);
+    background-size: 400% 400%;
+    animation: gradientShift 30s ease infinite;
+    z-index: -3;
+    transition: opacity 0.8s ease;
+    will-change: transform;
+    transform: translate3d(0,0,0);
 }
 
-function generateBuild(hero) {
-  const order = [], talents = [];
-  const skillCounts = hero.skills.map(() => 0);
-  const talentLevels = [10, 15, 20, 25];
-  let ultCount = 0, pendingPoints = 0;
-
-  for (let level = 1; level <= 25; level++) {
-    if (talentLevels.includes(level)) {
-      const tl = hero.talents[level];
-      if (tl && tl.length) talents.push({ level, value: randomElement(tl) });
-      continue;
-    }
-
-    pendingPoints++;
-    const ultLimit = getUltimateLimit(level);
-    const ultMax = hero.skills.find(s => s.isUltimate)?.maxLevel || 3;
-    const canTakeUlt = ultCount < Math.min(ultLimit, ultMax);
-
-    const available = [];
-    hero.skills.forEach((skill, idx) => {
-      if (skillCounts[idx] >= skill.maxLevel) return;
-      if (skill.isUltimate) {
-        if (canTakeUlt) available.push({ skill, idx });
-      } else {
-        if (skillCounts[idx] < getNormalSkillMax(level)) available.push({ skill, idx });
-      }
-    });
-
-    if (available.length && pendingPoints > 0) {
-      const chosen = randomElement(available);
-      skillCounts[chosen.idx]++;
-      if (chosen.skill.isUltimate) ultCount++;
-      pendingPoints--;
-      order.push({ level, type: 'skill', value: chosen.skill.name, img: chosen.skill.img });
-    }
-  }
-  return { order, talents };
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
-function buildItems() {
-  return [randomElement(bootsData), ...getRandomItemsFromPool(regularItemsData, 5)];
+/* GAY MODE картинка */
+.gay-bg {
+    position: fixed;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background-image: url('gaymode.jpg');
+    background-size: cover;
+    background-position: center;
+    z-index: -2;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    pointer-events: none;
 }
 
-function createBuildForHero(hero) {
-  const { order, talents } = generateBuild(hero);
-  return { hero, items: buildItems(), buildOrder: order, talents };
+/* При включённом GAY MODE показываем картинку, скрываем градиент */
+body.gay-mode .gay-bg {
+    opacity: 1;
 }
 
-function generateBuildForRandomHero() {
-  if (!isDataLoaded) return;
-  const hero = randomElement(heroesData);
-  currentBuild = createBuildForHero(hero);
-  replaceCount = 0;
-  closeModal();
-  renderBuild();
-  document.getElementById('shareBtn').classList.remove('hidden');
+body.gay-mode .background-animation {
+    opacity: 0;
 }
 
-function replaceItem(index) {
-  if (!currentBuild || isRouletteActive) return;
-  if (replaceCount >= MAX_REPLACES) { showModal(); return; }
-  if (index === 0) {
-    currentBuild.items[0] = randomElement(bootsData);
-  } else {
-    const existing = currentBuild.items.slice(1).map(i => i.key);
-    const available = regularItemsData.filter(i => !existing.includes(i.key));
-    if (!available.length) return;
-    currentBuild.items[index] = randomElement(available);
-  }
-  replaceCount++;
-  renderBuild();
+.casino-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #7c3aed, #c084fc, #5b21b6, #3b0764);
+    background-size: 400% 400%;
+    animation: casinoShift 6s ease infinite;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
 }
 
-function renderBuild() {
-  if (!currentBuild) return;
-  const { hero, items, buildOrder, talents } = currentBuild;
+.casino-bg.show { opacity: 1; }
 
-  let html = `
-    <div class="hero-header">
-      <img class="hero-img" src="${hero.img}" alt="${hero.name}">
-      <span class="hero-name">${hero.name}</span>
-    </div>
-    <div class="section">
-      <h3>Предметы <span class="replace-counter">(Осталось замен: ${MAX_REPLACES - replaceCount})</span></h3>
-      <div class="items-list" id="itemsList">`;
-
-  items.forEach((item, index) => {
-    const draggable = index === 0 ? '' : 'draggable="true"';
-    html += `
-      <span class="item" data-index="${index}" ${draggable}>
-        <img class="item-img" src="${item.img}" alt="${item.name}">
-        <span class="item-name">${item.name}</span>
-        <button class="replace-item-btn" data-index="${index}" title="Заменить"><span>↻</span></button>
-      </span>`;
-  });
-
-  html += `</div></div>
-    <div class="section"><h3>Порядок прокачки</h3><div class="build-order">`;
-
-  buildOrder.forEach(entry => {
-    const img = entry.img ? `<img class="skill-img" src="${entry.img}" alt="">` : '';
-    html += `<div class="level-entry">${img} ⚔️ Ур.${entry.level}: ${entry.value}</div>`;
-  });
-
-  html += `</div></div>
-    <div class="section"><h3>Таланты</h3><div class="talents-tree">`;
-
-  [25,20,15,10].forEach(level => {
-    const tl = hero.talents[level] || [];
-    if (!tl.length) return;
-    const left = tl[1] || '';
-    const right = tl[0] || '';
-    const selected = talents.find(t => t.level === level);
-    const leftSel = left && selected?.value === left;
-    const rightSel = right && selected?.value === right;
-    html += `
-      <div class="talent-level-row">
-        <div class="talent-node left ${leftSel ? 'selected' : ''}">${left}</div>
-        <div class="talent-center"><span class="talent-level-number">${level}</span></div>
-        <div class="talent-node right ${rightSel ? 'selected' : ''}">${right}</div>
-      </div>`;
-  });
-
-  html += `</div></div>`;
-
-  // Кнопка "Поделиться" под талантами, по центру
-  html += `<div class="section" style="text-align: center;">
-              <button id="shareBtn" class="hidden">🔗 Поделиться билдом</button>
-           </div>`;
-
-  document.getElementById('result').innerHTML = html;
-  attachDragAndDropHandlers();
+@keyframes casinoShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
-function attachDragAndDropHandlers() {
-  const list = document.getElementById('itemsList');
-  if (!list) return;
-
-  list.addEventListener('dragstart', e => {
-    const item = e.target.closest('.item');
-    if (!item || item.dataset.index === '0') { e.preventDefault(); return; }
-    draggedItemIndex = parseInt(item.dataset.index);
-    item.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', draggedItemIndex);
-  });
-
-  list.addEventListener('dragend', e => {
-    document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
-    draggedItemIndex = null;
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    list.classList.remove('drag-over');
-  });
-
-  list.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const item = e.target.closest('.item');
-    if (item && item.dataset.index !== '0') item.classList.add('drag-over');
-    list.classList.add('drag-over');
-  });
-
-  list.addEventListener('dragleave', e => {
-    const item = e.target.closest('.item');
-    if (item) item.classList.remove('drag-over');
-    list.classList.remove('drag-over');
-  });
-
-  list.addEventListener('drop', e => {
-    e.preventDefault();
-    const target = e.target.closest('.item');
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    list.classList.remove('drag-over');
-    if (!target || draggedItemIndex === null) return;
-    const targetIndex = parseInt(target.dataset.index);
-    if (targetIndex === 0 || targetIndex === draggedItemIndex) return;
-
-    const items = currentBuild.items;
-    [items[draggedItemIndex], items[targetIndex]] = [items[targetIndex], items[draggedItemIndex]];
-    renderBuild();
-  });
+.container {
+    background: var(--card-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    padding: 40px;
+    max-width: 720px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    z-index: 1;
 }
 
-function shareBuild() {
-  if (!currentBuild) return;
-  const data = {
-    heroName: currentBuild.hero.name,
-    items: currentBuild.items,
-    buildOrder: currentBuild.buildOrder,
-    talents: currentBuild.talents
-  };
-  const json = JSON.stringify(data);
-  const encoded = btoa(unescape(encodeURIComponent(json)));
-  const url = `${window.location.origin}${window.location.pathname}?build=${encoded}`;
-  navigator.clipboard.writeText(url).then(() => {
-    alert('Ссылка скопирована в буфер обмена!');
-  }).catch(() => {
-    prompt('Скопируйте ссылку:', url);
-  });
+h1 {
+    margin: 0 0 20px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #c084fc, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-function startRoulette() {
-  if (!isDataLoaded || isRouletteActive) return;
-  isRouletteActive = true;
-  replaceCount = 0;
-  closeModal();
-
-  const targetHero = randomElement(heroesData);
-  currentBuild = createBuildForHero(targetHero);
-
-  const overlay = document.getElementById('rouletteOverlay');
-  overlay.classList.add('active');
-  document.getElementById('startBuildBtn').classList.add('hidden');
-  document.getElementById('casinoBg').classList.add('show');
-  const grid = document.getElementById('slotGrid');
-  grid.classList.remove('merged');
-
-  const cells = document.querySelectorAll('.slot-cell');
-  cells.forEach((cell, i) => {
-    cell.classList.remove('visible');
-    setTimeout(() => cell.classList.add('visible'), i * 50);
-  });
-
-  const tracks = [];
-  for (let i = 0; i < 9; i++) tracks.push(document.getElementById(`track${i}`));
-  tracks.forEach(track => track.innerHTML = '');
-
-  const itemHeight = 150;
-
-  for (let col = 0; col < 3; col++) {
-    const shuffled = [...heroesData].sort(() => Math.random() - 0.5);
-    const prefix = shuffled.slice(0, 20);
-    const suffix = shuffled.slice(20, 39);
-    const sequence = [...prefix, targetHero, ...suffix];
-    const targetIndex = prefix.length;
-
-    for (let row = 0; row < 3; row++) {
-      const trackIndex = row * 3 + col;
-      const track = tracks[trackIndex];
-      sequence.forEach(hero => {
-        const div = document.createElement('div');
-        div.className = 'slot-item';
-        const img = document.createElement('img');
-        img.src = hero.img;
-        img.alt = hero.name;
-        div.appendChild(img);
-        track.appendChild(div);
-      });
-
-      track.style.transition = 'none';
-      track.style.transform = 'translateY(0)';
-      track.getBoundingClientRect();
-      track.style.transition = `transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)`;
-      track.style.transform = `translateY(-${targetIndex * itemHeight}px)`;
-    }
-  }
-
-  try {
-    if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio = null; }
-    rouletteAudio = new Audio(ROULETTE_SOUND_FILE);
-    rouletteAudio.loop = true;
-    rouletteAudio.volume = 0.2;
-    rouletteAudio.play()
-      .then(() => console.log('Звук запущен'))
-      .catch(e => console.warn('Звук не воспроизведён:', e.message));
-  } catch (e) {
-    console.warn('Ошибка создания аудио:', e.message);
-  }
-
-  setTimeout(() => {
-    if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio.currentTime = 0; rouletteAudio = null; }
-    document.getElementById('casinoBg').classList.remove('show');
-    grid.classList.add('merged');
-    document.getElementById('startBuildBtn').classList.remove('hidden');
-    createConfetti();
-  }, 5000);
+.emoji {
+    -webkit-text-fill-color: initial;
+    background: none;
 }
 
-document.getElementById('startBuildBtn').addEventListener('click', function() {
-  document.getElementById('rouletteOverlay').classList.remove('active');
-  document.getElementById('slotGrid').classList.remove('merged');
-  document.querySelectorAll('.slot-cell').forEach(cell => {
-    cell.style.width = '';
-    cell.style.height = '';
-  });
-  if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio.currentTime = 0; rouletteAudio = null; }
-  document.getElementById('casinoBg').classList.remove('show');
-  renderBuild();
-  document.getElementById('shareBtn').classList.remove('hidden');
-  isRouletteActive = false;
-});
-
-function createConfetti() {
-  const colors = ['#ff00cc', '#3333ff', '#00ffff', '#ff9900', '#ff0066', '#00ff99'];
-  for (let i = 0; i < 50; i++) {
-    const confetti = document.createElement('div');
-    confetti.className = 'confetti';
-    confetti.style.left = Math.random() * 100 + 'vw';
-    confetti.style.top = Math.random() * -20 + 'vh';
-    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-    confetti.style.animationDuration = (Math.random() * 1 + 1) + 's';
-    confetti.style.width = (Math.random() * 6 + 6) + 'px';
-    confetti.style.height = (Math.random() * 6 + 6) + 'px';
-    document.body.appendChild(confetti);
-    setTimeout(() => confetti.remove(), 2000);
-  }
+/* Общие стили для кнопок */
+button {
+    font-family: inherit;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    font-size: 1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
-const modal = document.getElementById('replaceLimitModal');
-const closeModalBtn = document.getElementById('closeModalBtn');
-function showModal() { modal.classList.add('show'); }
-function closeModal() { modal.classList.remove('show'); }
-closeModalBtn.addEventListener('click', closeModal);
-window.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+button:disabled { background: #444; cursor: not-allowed; box-shadow: none; }
+button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4); }
+button:active { transform: translateY(0); box-shadow: none; }
 
-document.addEventListener('click', function(e) {
-  if (e.target && e.target.id === 'shareBtn') {
-    shareBuild();
-  }
-});
+/* Кнопка "Сгенерировать билд" с анимацией бегущего градиента */
+#generateBtn {
+    position: relative;
+    padding: 12px 28px;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 300px;
+    min-height: 60px;
+    text-align: center;
+    color: #fff;
+    text-transform: uppercase;
+    text-decoration: none;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 30px;
+    z-index: 1;
+    user-select: none;
+    cursor: pointer;
+    background: linear-gradient(90deg, #7c3aed, #c084fc, #4c1d95, #7c3aed);
+    background-size: 400%;
+    transition: color 0.3s ease;
+}
 
-document.getElementById('result').addEventListener('click', e => {
-  const btn = e.target.closest('.replace-item-btn');
-  if (btn && !isRouletteActive) replaceItem(parseInt(btn.dataset.index));
-});
+#generateBtn:hover {
+    animation: animate-49 8s linear infinite;
+    color: #fff;
+    transform: none;
+    box-shadow: none;
+}
 
-document.getElementById('generateBtn').addEventListener('click', startRoulette);
-window.addEventListener('load', loadData);
+#generateBtn::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    bottom: -5px;
+    left: -5px;
+    z-index: -1;
+    background: linear-gradient(90deg, #7c3aed, #c084fc, #4c1d95, #7c3aed);
+    background-size: 400%;
+    border-radius: 40px;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+#generateBtn:hover::before {
+    filter: blur(20px);
+    opacity: 1;
+    animation: animate-49 8s linear infinite;
+}
+
+#generateBtn:disabled {
+    pointer-events: none;
+    opacity: 0.65;
+    color: #7e7e7e;
+    box-shadow: none;
+    background: #dcdcdc;
+    animation: none;
+}
+
+#generateBtn:disabled::before {
+    display: none;
+}
+
+@keyframes animate-49 {
+    0% { background-position: 0%; }
+    100% { background-position: 400%; }
+}
+
+/* Свитчер GAY MODE */
+.mode-switch {
+    margin-bottom: 20px;
+}
+
+.gay-mode-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.gay-mode-toggle__track {
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+    background: #3d3d5c;
+    border-radius: 15px;
+    position: relative;
+    transition: background 0.4s ease;
+}
+
+.gay-mode-toggle__thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 26px;
+    height: 26px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), background 0.4s ease;
+}
+
+.gay-mode-toggle.active .gay-mode-toggle__track {
+    background: linear-gradient(90deg, #ff00cc, #ff9900, #ffff00);
+}
+
+.gay-mode-toggle.active .gay-mode-toggle__thumb {
+    transform: translateX(30px);
+    background: #ffcc00;
+}
+
+.gay-mode-toggle__label {
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+    user-select: none;
+}
+
+/* Параллакс эффект */
+.background-animation,
+.gay-bg {
+    transform: translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0);
+}
+
+/* Остальные элементы интерфейса */
+.status { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; }
+.result { text-align: left; }
+
+.hero-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 15px 20px;
+    backdrop-filter: blur(10px);
+}
+
+.hero-img {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    object-fit: cover;
+    background: #2a2a3d;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+}
+
+.hero-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+}
+
+.section { margin-bottom: 25px; }
+
+.section h3 {
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 8px;
+    color: var(--accent);
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.replace-counter { font-size: 0.9rem; color: var(--text-muted); font-weight: 400; }
+
+.items-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+
+.item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 8px 40px 8px 12px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    min-height: 48px;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.item:hover { border-color: var(--primary-light); box-shadow: 0 0 15px rgba(124, 58, 237, 0.3); }
+
+.item-img {
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    object-fit: contain;
+    background: rgba(0,0,0,0.3);
+    flex-shrink: 0;
+}
+
+.item-name { display: inline-block; vertical-align: middle; }
+
+.replace-item-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    color: var(--accent);
+    cursor: pointer;
+    width: 26px; height: 26px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: color 0.2s, background 0.2s;
+}
+
+.replace-item-btn:hover { color: #fff; background: var(--primary); transform: translateY(-50%) !important; }
+
+.build-order { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 10px; }
+
+.level-entry {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(5px);
+}
+
+.skill-img { width: 28px; height: 28px; margin-right: 8px; border-radius: 4px; object-fit: contain; }
+
+.talents-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    padding: 10px 0;
+    margin-top: 10px;
+}
+
+.talents-tree::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 20px;
+    bottom: 20px;
+    width: 2px;
+    background: var(--card-border);
+    transform: translateX(-50%);
+    z-index: 0;
+}
+
+.talent-level-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+}
+
+.talent-node {
+    width: 40%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    cursor: default;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    position: relative;
+}
+
+.talent-node.left { text-align: right; }
+.talent-node.right { text-align: left; }
+
+.talent-node.selected {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
+}
+
+.talent-center { width: 40px; display: flex; justify-content: center; align-items: center; z-index: 1; }
+
+.talent-level-number {
+    background: #1e1b4b;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    width: 32px; height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show { display: flex; }
+
+.modal-content {
+    background: #2a2a3d;
+    color: var(--text);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    border: 1px solid var(--card-border);
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px; right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--accent);
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.modal-close:hover { color: var(--gold); }
+
+.modal-image {
+    display: block;
+    margin: 0 auto 15px auto;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    object-fit: contain;
+}
+
+/* Рулетка-слоты 3x3 */
+.roulette-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.roulette-overlay.active { display: flex; }
+
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 200px);
+    grid-template-rows: repeat(3, 150px);
+    gap: 5px;
+    margin-bottom: 30px;
+    transition: all 0.8s ease;
+    z-index: 1;
+    position: relative;
+}
+
+.slot-cell {
+    width: 200px;
+    height: 150px;
+    overflow: hidden;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    background: #1e1e2f;
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity 0.5s ease, transform 0.5s ease, width 1.2s ease-in-out, height 1.2s ease-in-out;
+}
+
+.slot-cell.visible { opacity: 1; transform: scale(1); }
+.slot-cell.center-row { border-color: var(--gold); }
+
+.slot-track {
+    display: flex;
+    flex-direction: column;
+    transition: transform 8.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    will-change: transform;
+}
+
+.slot-item {
+    width: 200px;
+    height: 150px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slot-item img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Затемнение рядов, кроме центрального */
+.slot-grid:not(.merged) .slot-cell:nth-child(-n+3) {
+    opacity: 0.35;
+    filter: brightness(0.5);
+    transition: opacity 0.5s ease, filter 0.5s ease, width 1.2s ease-in-out, height 1.2s ease-in-out;
+}
+
+.slot-grid:not(.merged) .slot-cell:nth-child(n+7) {
+    opacity: 0.35;
+    filter: brightness(0.5);
+    transition: opacity 0.5s ease, filter 0.5s ease, width 1.2s ease-in-out, height 1.2s ease-in-out;
+}
+
+/* Центральный ряд остаётся ярким */
+.slot-grid:not(.merged) .slot-cell:nth-child(4),
+.slot-grid:not(.merged) .slot-cell:nth-child(5),
+.slot-grid:not(.merged) .slot-cell:nth-child(6) {
+    opacity: 1;
+    filter: brightness(1);
+}
+
+/* После остановки: все квадраты, кроме центрального, схлопываются в него */
+.slot-grid.merged {
+    display: block;
+    position: relative;
+    width: 200px;
+    height: 150px;
+}
+
+.slot-grid.merged .slot-cell {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: all 1.2s ease-in-out;
+}
+
+.slot-grid.merged .slot-cell:not([data-index="4"]) {
+    width: 0;
+    height: 0;
+    opacity: 0;
+    border-width: 0;
+    margin: 0;
+    transform: translate(100px, 75px) scale(0);
+}
+
+.slot-grid.merged .slot-cell[data-index="4"] {
+    width: 200px;
+    height: 150px;
+    top: 0;
+    left: 0;
+}
+
+.hidden { display: none; }
+
+/* Drag & drop */
+.item.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+    cursor: grabbing;
+    border: 2px dashed var(--accent);
+}
+
+.item.drag-over {
+    border: 2px dashed var(--gold);
+    transform: scale(1.05);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.items-list.drag-over { background: rgba(124, 58, 237, 0.1); border-radius: 12px; }
+
+.confetti {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: #f00;
+    z-index: 3000;
+    pointer-events: none;
+    animation: confettiFall 1.5s ease-out forwards;
+}
+
+@keyframes confettiFall {
+    0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translateY(400px) rotate(720deg) scale(0); }
+}
+
+/* Кнопка "Поделиться" с заливкой */
+#shareBtn {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    font-size: 1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+#shareBtn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: #4CAF50;
+    transition: width 1.5s ease;
+    z-index: -1;
+    border-radius: inherit;
+}
+
+#shareBtn.copied::after {
+    width: 100%;
+}
+
+#shareBtn .share-text {
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    display: inline-block;
+}
+
+#shareBtn .share-text.hidden {
+    opacity: 0;
+    transform: translateY(5px);
+}
+/* Затемнение контейнера в GAY MODE */
+body.gay-mode .container {
+    background: rgba(13, 11, 26, 0.85);
+    backdrop-filter: blur(25px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
