@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dota 2 Random Build Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-animation"></div>
+    <div class="casino-bg" id="casinoBg"></div>
+    <div class="container">
+        <h1><span class="emoji">🎲</span> Dota 2 Random Build</h1>
+        <button id="generateBtn" disabled>Загрузка данных...</button>
+        <div id="status" class="status"></div>
+        <div id="result" class="result"></div>
+    </div>
+
+    <div id="replaceLimitModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeModalBtn">&times;</span>
+            <img src="https://sun9-12.vkuserphoto.ru/s/v1/ig2/KwCi7Fg6FnEq_8PD-vLSZ_LUV2jLyG3DTfX38OTrgMqazvM9xjCnw93AtGWbAvoFhNHhL9LOsRMV4Xx24xSNbFKo.jpg?quality=95&as=32x21,48x32,72x48,108x72,160x107,240x160,360x240,480x320,540x360,640x427,720x480,750x500&from=bu&cs=750x0" alt="Сюрприз" class="modal-image">
+            <p>Серега пидорас, замени героя, твои замены предметов закончились</p>
+        </div>
+    </div>
+
+    <div id="rouletteOverlay" class="roulette-overlay">
+        <div class="slot-grid" id="slotGrid">
+            <div class="slot-cell" data-index="0"><div class="slot-track" id="track0"></div></div>
+            <div class="slot-cell" data-index="1"><div class="slot-track" id="track1"></div></div>
+            <div class="slot-cell" data-index="2"><div class="slot-track" id="track2"></div></div>
+            <div class="slot-cell center-row" data-index="3"><div class="slot-track" id="track3"></div></div>
+            <div class="slot-cell center-row" data-index="4"><div class="slot-track" id="track4"></div></div>
+            <div class="slot-cell center-row" data-index="5"><div class="slot-track" id="track5"></div></div>
+            <div class="slot-cell" data-index="6"><div class="slot-track" id="track6"></div></div>
+            <div class="slot-cell" data-index="7"><div class="slot-track" id="track7"></div></div>
+            <div class="slot-cell" data-index="8"><div class="slot-track" id="track8"></div></div>
+        </div>
+        <button id="startBuildBtn" class="hidden">ТРАХАТЬ</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
