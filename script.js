@@ -451,7 +451,7 @@ function startRoulette() {
     if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio = null; }
     rouletteAudio = new Audio(ROULETTE_SOUND_FILE);
     rouletteAudio.loop = true;
-    rouletteAudio.volume = 0.8;
+    rouletteAudio.volume = 0.2;
     rouletteAudio.play()
       .then(() => console.log('Звук запущен'))
       .catch(e => console.warn('Звук не воспроизведён:', e.message));
