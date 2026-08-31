@@ -16,7 +16,7 @@ const ALLOWED_ITEM_KEYS = new Set([
   'veil_of_discord', 'glimmer_cape', 'force_staff', 'aether_lens', 'witch_blade', 'cyclone', 'rod_of_atos',
   'orchid', 'ultimate_scepter', 'nullifier', 'kaya', 'ethereal_blade', 'dagon', 'kaya_and_yasha', 'sange_and_kaya',
   'bloodstone', 'refresher', 'sheepstick', 'octarine_core', 'wind_waker', 'specialists_array',
-  'vanguard', 'blade_mail', 'mage_slayer', 'soul_booster', 'eternal_shroud', 'lotus_orb', 'black_king_bar',
+  'vanguard', 'blade_mail', 'mage_slayer', 'soul_booster', 'lotus_orb', 'black_king_bar',
   'hurricane_pike', 'sphere', 'aeon_disk', 'shivas_guard', 'manta', 'heart', 'assault', 'bloodthorn',
   'crystalys', 'meteor_hammer', 'armlet', 'basher', 'shadow_blade', 'bfury', 'monkey_king_bar', 'maelstrom',
   'diffusal_blade', 'desolator', 'heavens_halberd', 'sange', 'yasha', 'sange_and_yasha', 'echo_sabre',
@@ -28,7 +28,7 @@ const ALLOWED_ITEM_KEYS = new Set([
 ]);
 
 const BOOTS_ITEM_KEYS = new Set([
-  'arcane_boots', 'travel_boots', 'travel_boots_2', 'boots', 'boots_of_bearing', 'tranquil_boots', 'phase_boots', 'power_treads'
+  'arcane_boots', 'travel_boots', 'travel_boots_2', 'boots', 'boots_of_bearing', 'tranquil_boots', 'phase_boots', 'power_treads', 'guardian_greaves'
 ]);
 
 let rouletteAudio = null;
@@ -45,6 +45,8 @@ const MAX_REPLACES = 10;
 let isRouletteActive = false;
 let draggedItemIndex = null;
 let isShareAnimating = false;
+
+let recentRegularItems = []; // очередь последних 5 обычных предметов
 
 const urlParams = new URLSearchParams(window.location.search);
 let sharedBuild = null;
@@ -185,9 +187,29 @@ async function loadData() {
 
 function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function randomElement(arr) { return arr[randomInt(0, arr.length - 1)]; }
-function getRandomItemsFromPool(pool, count) {
-  if (pool.length <= count) return pool.slice();
-  return [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+
+// Выбор случайного ботинка, с возможным исключением
+function getRandomBoot(excludeKey = null) {
+  let available = bootsData;
+  if (excludeKey) {
+    available = bootsData.filter(b => b.key !== excludeKey);
+    if (available.length === 0) available = bootsData;
+  }
+  return randomElement(available);
+}
+
+// Выбор случайного обычного предмета с учётом запрета повторов (5 роллов)
+function getRandomRegularItem() {
+  let available = regularItemsData.filter(item => !recentRegularItems.includes(item.key));
+  if (available.length === 0) {
+    available = regularItemsData.slice();
+  }
+  const item = randomElement(available);
+  recentRegularItems.push(item.key);
+  if (recentRegularItems.length > 5) {
+    recentRegularItems.shift();
+  }
+  return item;
 }
 
 function getNormalSkillMax(level) { return Math.ceil(level / 2); }
@@ -238,10 +260,17 @@ function generateBuild(hero) {
 }
 
 function buildItems() {
-  return [randomElement(bootsData), ...getRandomItemsFromPool(regularItemsData, 5)];
+  const boots = getRandomBoot(); // без исключения
+  const regulars = [];
+  for (let i = 0; i < 5; i++) {
+    regulars.push(getRandomRegularItem());
+  }
+  return [boots, ...regulars];
 }
 
 function createBuildForHero(hero) {
+  // Сброс истории недавних предметов при новом билде
+  recentRegularItems = [];
   const { order, talents } = generateBuild(hero);
   return { hero, items: buildItems(), buildOrder: order, talents };
 }
@@ -258,15 +287,24 @@ function generateBuildForRandomHero() {
 function replaceItem(index) {
   if (!currentBuild || isRouletteActive) return;
   if (replaceCount >= MAX_REPLACES) { showModal(); return; }
+
   if (index === 0) {
-    currentBuild.items[0] = randomElement(bootsData);
+    currentBuild.items[0] = getRandomBoot(currentBuild.items[0].key);
   } else {
-    const existing = currentBuild.items.slice(1).map(i => i.key);
-    const available = regularItemsData.filter(i => !existing.includes(i.key));
-    if (!available.length) return;
-    currentBuild.items[index] = randomElement(available);
+    currentBuild.items[index] = getRandomRegularItem();
   }
   replaceCount++;
+  renderBuild();
+}
+
+// Замена без траты лимита (правая кнопка мыши)
+function replaceItemWithoutCost(index) {
+  if (!currentBuild || isRouletteActive) return;
+  if (index === 0) {
+    currentBuild.items[0] = getRandomBoot(currentBuild.items[0].key);
+  } else {
+    currentBuild.items[index] = getRandomRegularItem();
+  }
   renderBuild();
 }
 
@@ -289,7 +327,7 @@ function renderBuild() {
       <span class="item" data-index="${index}" ${draggable}>
         <img class="item-img" src="${item.img}" alt="${item.name}">
         <span class="item-name">${item.name}</span>
-        <button class="replace-item-btn" data-index="${index}" title="Заменить"><span>↻</span></button>
+        <button class="replace-item-btn" data-index="${index}" title="Заменить">↻</button>
       </span>`;
   });
 
@@ -538,12 +576,11 @@ function createConfetti() {
 // GAY MODE переключатель
 const gayModeToggle = document.getElementById('gayModeToggle');
 gayModeToggle.addEventListener('click', function(e) {
-  e.stopPropagation(); // чтобы не срабатывал общий обработчик клика
+  e.stopPropagation();
   isGayMode = !isGayMode;
   document.body.classList.toggle('gay-mode', isGayMode);
   this.classList.toggle('active', isGayMode);
 
-  // Останавливаем hover-звук, если он играет
   if (hoverAudio) {
     hoverAudio.pause();
     hoverAudio.currentTime = 0;
@@ -604,6 +641,16 @@ document.addEventListener('mousemove', function(e) {
   parallaxY = y * 10;
   document.documentElement.style.setProperty('--parallax-x', `${parallaxX}px`);
   document.documentElement.style.setProperty('--parallax-y', `${parallaxY}px`);
+});
+
+// Контекстное меню (правая кнопка мыши) для замены без траты лимита
+document.addEventListener('contextmenu', function(e) {
+  const itemEl = e.target.closest('.item');
+  if (itemEl && !isRouletteActive) {
+    e.preventDefault();
+    const index = parseInt(itemEl.dataset.index);
+    replaceItemWithoutCost(index);
+  }
 });
 
 const modal = document.getElementById('replaceLimitModal');
