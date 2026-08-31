@@ -46,7 +46,7 @@ let isRouletteActive = false;
 let draggedItemIndex = null;
 let isShareAnimating = false;
 
-let recentRegularItems = []; // очередь последних 5 обычных предметов
+let recentRegularItems = [];
 
 const urlParams = new URLSearchParams(window.location.search);
 let sharedBuild = null;
@@ -54,6 +54,53 @@ let sharedBuild = null;
 let isGayMode = false;
 let parallaxX = 0;
 let parallaxY = 0;
+
+// Функции для previousBuild
+function savePreviousBuild() {
+  if (!currentBuild) return;
+  try {
+    localStorage.setItem('previousBuild', JSON.stringify(currentBuild));
+    updateLoadPreviousBuildButton();
+  } catch (e) {
+    console.warn('Не удалось сохранить предыдущий билд:', e);
+  }
+}
+
+function loadPreviousBuildFromStorage() {
+  try {
+    const saved = localStorage.getItem('previousBuild');
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    const hero = heroesData.find(h => h.name === parsed.hero.name);
+    if (hero) {
+      return {
+        hero: hero,
+        items: parsed.items,
+        buildOrder: parsed.buildOrder,
+        talents: parsed.talents
+      };
+    }
+  } catch (e) {
+    console.warn('Ошибка загрузки предыдущего билда:', e);
+  }
+  return null;
+}
+
+function deletePreviousBuild() {
+  localStorage.removeItem('previousBuild');
+  updateLoadPreviousBuildButton();
+}
+
+function updateLoadPreviousBuildButton() {
+  const btn = document.getElementById('loadPreviousBuildBtn');
+  if (!btn) return;
+  const hasPrevious = !!localStorage.getItem('previousBuild');
+  if (hasPrevious) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
 
 async function loadData() {
   try {
@@ -170,7 +217,7 @@ async function loadData() {
         if (hero) {
           currentBuild = { hero, items: decoded.items, buildOrder: decoded.buildOrder, talents: decoded.talents };
           replaceCount = 0;
-          renderBuild();
+          renderBuild(true);
         }
       } catch (e) {
         console.warn('Не удалось восстановить билд из URL:', e);
@@ -179,6 +226,7 @@ async function loadData() {
     } else {
       generateBuildForRandomHero();
     }
+    updateLoadPreviousBuildButton();
   } catch (e) {
     console.error(e);
     document.getElementById('status').textContent = `Ошибка: ${e.message}`;
@@ -188,7 +236,6 @@ async function loadData() {
 function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function randomElement(arr) { return arr[randomInt(0, arr.length - 1)]; }
 
-// Выбор случайного ботинка, с возможным исключением
 function getRandomBoot(excludeKey = null) {
   let available = bootsData;
   if (excludeKey) {
@@ -198,7 +245,6 @@ function getRandomBoot(excludeKey = null) {
   return randomElement(available);
 }
 
-// Выбор случайного обычного предмета с учётом запрета повторов (5 роллов)
 function getRandomRegularItem() {
   let available = regularItemsData.filter(item => !recentRegularItems.includes(item.key));
   if (available.length === 0) {
@@ -260,7 +306,7 @@ function generateBuild(hero) {
 }
 
 function buildItems() {
-  const boots = getRandomBoot(); // без исключения
+  const boots = getRandomBoot();
   const regulars = [];
   for (let i = 0; i < 5; i++) {
     regulars.push(getRandomRegularItem());
@@ -269,7 +315,6 @@ function buildItems() {
 }
 
 function createBuildForHero(hero) {
-  // Сброс истории недавних предметов при новом билде
   recentRegularItems = [];
   const { order, talents } = generateBuild(hero);
   return { hero, items: buildItems(), buildOrder: order, talents };
@@ -281,7 +326,7 @@ function generateBuildForRandomHero() {
   currentBuild = createBuildForHero(hero);
   replaceCount = 0;
   closeModal();
-  renderBuild();
+  renderBuild(true);
 }
 
 function replaceItem(index) {
@@ -294,10 +339,9 @@ function replaceItem(index) {
     currentBuild.items[index] = getRandomRegularItem();
   }
   replaceCount++;
-  renderBuild();
+  renderBuild(false);
 }
 
-// Замена без траты лимита (правая кнопка мыши)
 function replaceItemWithoutCost(index) {
   if (!currentBuild || isRouletteActive) return;
   if (index === 0) {
@@ -305,10 +349,10 @@ function replaceItemWithoutCost(index) {
   } else {
     currentBuild.items[index] = getRandomRegularItem();
   }
-  renderBuild();
+  renderBuild(false);
 }
 
-function renderBuild() {
+function renderBuild(animate = false) {
   if (!currentBuild) return;
   const { hero, items, buildOrder, talents } = currentBuild;
 
@@ -316,6 +360,7 @@ function renderBuild() {
     <div class="hero-header">
       <img class="hero-img" src="${hero.img}" alt="${hero.name}">
       <span class="hero-name">${hero.name}</span>
+      <button id="loadPreviousBuildBtn" class="hero-back-btn hidden">↩ Прошлый билд</button>
     </div>
     <div class="section">
       <h3>Предметы <span class="replace-counter">(Осталось замен: ${MAX_REPLACES - replaceCount})</span></h3>
@@ -360,15 +405,46 @@ function renderBuild() {
 
   html += `</div></div>`;
 
-  // Кнопка "Поделиться" под талантами, по центру
   html += `<div class="section" style="text-align: center;">
               <button id="shareBtn" class="hidden"><span class="share-text">🔗 Поделиться билдом</span></button>
            </div>`;
 
-  document.getElementById('result').innerHTML = html;
+  const resultEl = document.getElementById('result');
+  resultEl.innerHTML = html;
+
+  if (animate) {
+    resultEl.classList.remove('animate-in');
+    void resultEl.offsetWidth;
+    resultEl.classList.add('animate-in');
+  }
+
   const shareBtn = document.getElementById('shareBtn');
   shareBtn.classList.remove('hidden');
-  shareBtn.addEventListener('click', shareBuild);
+  shareBtn.addEventListener('click', () => shareBuild('link'));
+  shareBtn.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    shareBuild('text');
+  });
+
+  // Обработчик кнопки возврата
+  const loadPrevBtn = document.getElementById('loadPreviousBuildBtn');
+  if (loadPrevBtn) {
+    loadPrevBtn.addEventListener('click', function() {
+      const prevBuild = loadPreviousBuildFromStorage();
+      if (prevBuild) {
+        currentBuild = prevBuild;
+        replaceCount = 0;
+        deletePreviousBuild();
+        renderBuild(false);
+      }
+    });
+    if (localStorage.getItem('previousBuild')) {
+      loadPrevBtn.classList.remove('hidden');
+    } else {
+      loadPrevBtn.classList.add('hidden');
+    }
+  }
+
   attachDragAndDropHandlers();
 }
 
@@ -417,11 +493,11 @@ function attachDragAndDropHandlers() {
 
     const items = currentBuild.items;
     [items[draggedItemIndex], items[targetIndex]] = [items[targetIndex], items[draggedItemIndex]];
-    renderBuild();
+    renderBuild(false);
   });
 }
 
-function shareBuild() {
+function shareBuild(mode = 'link') {
   if (!currentBuild || isShareAnimating) return;
 
   const btn = document.getElementById('shareBtn');
@@ -430,18 +506,22 @@ function shareBuild() {
 
   isShareAnimating = true;
 
-  const data = {
-    heroName: currentBuild.hero.name,
-    items: currentBuild.items,
-    buildOrder: currentBuild.buildOrder,
-    talents: currentBuild.talents
-  };
+  let contentToCopy = '';
+  if (mode === 'link') {
+    const data = {
+      heroName: currentBuild.hero.name,
+      items: currentBuild.items,
+      buildOrder: currentBuild.buildOrder,
+      talents: currentBuild.talents
+    };
+    const json = JSON.stringify(data);
+    const encoded = btoa(unescape(encodeURIComponent(json)));
+    contentToCopy = `${window.location.origin}${window.location.pathname}?build=${encoded}`;
+  } else {
+    contentToCopy = buildTextDescription();
+  }
 
-  const json = JSON.stringify(data);
-  const encoded = btoa(unescape(encodeURIComponent(json)));
-  const url = `${window.location.origin}${window.location.pathname}?build=${encoded}`;
-
-  navigator.clipboard.writeText(url).then(() => {
+  navigator.clipboard.writeText(contentToCopy).then(() => {
     btn.classList.add('copied');
     textSpan.classList.add('hidden');
 
@@ -462,12 +542,37 @@ function shareBuild() {
     }, 6000);
   }).catch(() => {
     isShareAnimating = false;
-    prompt('Скопируйте ссылку:', url);
+    prompt('Скопируйте текст:', contentToCopy);
   });
+}
+
+function buildTextDescription() {
+  const hero = currentBuild.hero.name;
+  const items = currentBuild.items.map(i => i.name).join(', ');
+  const talents = currentBuild.talents;
+  const talentLevels = [10, 15, 20, 25];
+  const sides = [];
+
+  talentLevels.forEach(level => {
+    const selected = talents.find(t => t.level === level);
+    if (!selected) return;
+    const tl = currentBuild.hero.talents[level] || [];
+    const left = tl[1] || '';
+    const right = tl[0] || '';
+    if (selected.value === left) sides.push('Лево');
+    else if (selected.value === right) sides.push('Право');
+    else sides.push('?');
+  });
+
+  return `Герой: ${hero}\nПредметы: ${items}\nТаланты: ${sides.join(' > ')}`;
 }
 
 function startRoulette() {
   if (!isDataLoaded || isRouletteActive) return;
+
+  // Сохраняем текущий билд как предыдущий перед генерацией нового
+  savePreviousBuild();
+
   isRouletteActive = true;
   replaceCount = 0;
   closeModal();
@@ -492,7 +597,8 @@ function startRoulette() {
   for (let i = 0; i < 9; i++) tracks.push(document.getElementById(`track${i}`));
   tracks.forEach(track => track.innerHTML = '');
 
-  const itemHeight = 150;
+  const firstCell = document.querySelector('.slot-cell');
+  const itemHeight = firstCell ? firstCell.offsetHeight : 150;
 
   for (let col = 0; col < 3; col++) {
     const shuffled = [...heroesData].sort(() => Math.random() - 0.5);
@@ -553,7 +659,7 @@ document.getElementById('startBuildBtn').addEventListener('click', function() {
   });
   if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio.currentTime = 0; rouletteAudio = null; }
   document.getElementById('casinoBg').classList.remove('show');
-  renderBuild();
+  renderBuild(true);
   isRouletteActive = false;
 });
 
@@ -588,7 +694,7 @@ gayModeToggle.addEventListener('click', function(e) {
   }
 });
 
-// Обработчик кликов для GAY MODE (звук gay.mp3)
+// Звук при клике в GAY MODE
 document.addEventListener('click', function(e) {
   if (isGayMode) {
     try {
@@ -605,7 +711,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Наведение на кнопку "Сгенерировать билд" в GAY MODE
+// Звук при наведении на кнопку "Сгенерировать билд"
 const generateBtn = document.getElementById('generateBtn');
 
 generateBtn.addEventListener('mouseenter', function() {
@@ -633,7 +739,7 @@ generateBtn.addEventListener('mouseleave', function() {
   }
 });
 
-// Параллакс эффект
+// Параллакс
 document.addEventListener('mousemove', function(e) {
   const x = (e.clientX / window.innerWidth - 0.5) * 2;
   const y = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -643,7 +749,7 @@ document.addEventListener('mousemove', function(e) {
   document.documentElement.style.setProperty('--parallax-y', `${parallaxY}px`);
 });
 
-// Контекстное меню (правая кнопка мыши) для замены без траты лимита
+// Контекстное меню для бесплатной замены
 document.addEventListener('contextmenu', function(e) {
   const itemEl = e.target.closest('.item');
   if (itemEl && !isRouletteActive) {
