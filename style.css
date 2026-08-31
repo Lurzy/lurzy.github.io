@@ -26,7 +26,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Обычный градиентный фон */
 .background-animation {
     position: fixed;
     top: -20px;
@@ -48,7 +47,6 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* GAY MODE картинка */
 .gay-bg {
     position: fixed;
     top: -20px;
@@ -66,13 +64,13 @@ body {
     pointer-events: none;
 }
 
-/* При включённом GAY MODE показываем картинку, скрываем градиент */
-body.gay-mode .gay-bg {
-    opacity: 1;
-}
+body.gay-mode .gay-bg { opacity: 1; }
+body.gay-mode .background-animation { opacity: 0; }
 
-body.gay-mode .background-animation {
-    opacity: 0;
+body.gay-mode .container {
+    background: rgba(13, 11, 26, 0.85);
+    backdrop-filter: blur(25px);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .casino-bg {
@@ -121,12 +119,8 @@ h1 {
     background-clip: text;
 }
 
-.emoji {
-    -webkit-text-fill-color: initial;
-    background: none;
-}
+.emoji { -webkit-text-fill-color: initial; background: none; }
 
-/* Общие стили для кнопок */
 button {
     font-family: inherit;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -146,7 +140,6 @@ button:disabled { background: #444; cursor: not-allowed; box-shadow: none; }
 button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4); }
 button:active { transform: translateY(0); box-shadow: none; }
 
-/* Кнопка "Сгенерировать билд" с анимацией бегущего градиента */
 #generateBtn {
     position: relative;
     padding: 12px 28px;
@@ -181,10 +174,7 @@ button:active { transform: translateY(0); box-shadow: none; }
 #generateBtn::before {
     content: "";
     position: absolute;
-    top: -5px;
-    right: -5px;
-    bottom: -5px;
-    left: -5px;
+    top: -5px; right: -5px; bottom: -5px; left: -5px;
     z-index: -1;
     background: linear-gradient(90deg, #7c3aed, #c084fc, #4c1d95, #7c3aed);
     background-size: 400%;
@@ -208,19 +198,14 @@ button:active { transform: translateY(0); box-shadow: none; }
     animation: none;
 }
 
-#generateBtn:disabled::before {
-    display: none;
-}
+#generateBtn:disabled::before { display: none; }
 
 @keyframes animate-49 {
     0% { background-position: 0%; }
     100% { background-position: 400%; }
 }
 
-/* Свитчер GAY MODE */
-.mode-switch {
-    margin-bottom: 20px;
-}
+.mode-switch { margin-bottom: 20px; }
 
 .gay-mode-toggle {
     display: inline-flex;
@@ -271,17 +256,16 @@ button:active { transform: translateY(0); box-shadow: none; }
     user-select: none;
 }
 
-/* Параллакс эффект */
 .background-animation,
 .gay-bg {
     transform: translate3d(var(--parallax-x, 0), var(--parallax-y, 0), 0);
 }
 
-/* Остальные элементы интерфейса */
 .status { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 25px; }
 .result { text-align: left; }
 
 .hero-header {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 20px;
@@ -307,8 +291,36 @@ button:active { transform: translateY(0); box-shadow: none; }
     font-weight: 700;
     color: var(--accent);
     text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+    flex-shrink: 1;
 }
 
+/* Кнопка "Предыдущий билд" в hero-header */
+.hero-back-btn {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.hero-back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(192,132,252,0.3);
+    transform: translateY(-50%) !important;
+}
 .section { margin-bottom: 25px; }
 
 .section h3 {
@@ -552,7 +564,7 @@ button:active { transform: translateY(0); box-shadow: none; }
 .slot-track {
     display: flex;
     flex-direction: column;
-    transition: transform 8.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
     will-change: transform;
 }
 
@@ -567,20 +579,14 @@ button:active { transform: translateY(0); box-shadow: none; }
 
 .slot-item img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Затемнение рядов, кроме центрального */
 .slot-grid:not(.merged) .slot-cell:nth-child(-n+3) {
     opacity: 0.35;
     filter: brightness(0.5);
-    transition: opacity 0.5s ease, filter 0.5s ease, width 1.2s ease-in-out, height 1.2s ease-in-out;
 }
-
 .slot-grid:not(.merged) .slot-cell:nth-child(n+7) {
     opacity: 0.35;
     filter: brightness(0.5);
-    transition: opacity 0.5s ease, filter 0.5s ease, width 1.2s ease-in-out, height 1.2s ease-in-out;
 }
-
-/* Центральный ряд остаётся ярким */
 .slot-grid:not(.merged) .slot-cell:nth-child(4),
 .slot-grid:not(.merged) .slot-cell:nth-child(5),
 .slot-grid:not(.merged) .slot-cell:nth-child(6) {
@@ -588,21 +594,18 @@ button:active { transform: translateY(0); box-shadow: none; }
     filter: brightness(1);
 }
 
-/* После остановки: все квадраты, кроме центрального, схлопываются в него */
 .slot-grid.merged {
     display: block;
     position: relative;
     width: 200px;
     height: 150px;
 }
-
 .slot-grid.merged .slot-cell {
     position: absolute;
     top: 0;
     left: 0;
     transition: all 1.2s ease-in-out;
 }
-
 .slot-grid.merged .slot-cell:not([data-index="4"]) {
     width: 0;
     height: 0;
@@ -611,7 +614,6 @@ button:active { transform: translateY(0); box-shadow: none; }
     margin: 0;
     transform: translate(100px, 75px) scale(0);
 }
-
 .slot-grid.merged .slot-cell[data-index="4"] {
     width: 200px;
     height: 150px;
@@ -628,13 +630,11 @@ button:active { transform: translateY(0); box-shadow: none; }
     cursor: grabbing;
     border: 2px dashed var(--accent);
 }
-
 .item.drag-over {
     border: 2px dashed var(--gold);
     transform: scale(1.05);
     transition: transform 0.2s, border-color 0.2s;
 }
-
 .items-list.drag-over { background: rgba(124, 58, 237, 0.1); border-radius: 12px; }
 
 .confetti {
@@ -651,7 +651,7 @@ button:active { transform: translateY(0); box-shadow: none; }
     100% { opacity: 0; transform: translateY(400px) rotate(720deg) scale(0); }
 }
 
-/* Кнопка "Поделиться" с заливкой */
+/* Кнопка Поделиться */
 #shareBtn {
     position: relative;
     overflow: hidden;
@@ -667,7 +667,6 @@ button:active { transform: translateY(0); box-shadow: none; }
     z-index: 1;
     transition: color 0.3s ease;
 }
-
 #shareBtn::after {
     content: '';
     position: absolute;
@@ -680,25 +679,62 @@ button:active { transform: translateY(0); box-shadow: none; }
     z-index: -1;
     border-radius: inherit;
 }
-
-#shareBtn.copied::after {
-    width: 100%;
-}
-
+#shareBtn.copied::after { width: 100%; }
 #shareBtn .share-text {
     position: relative;
     z-index: 2;
     transition: opacity 0.5s ease, transform 0.5s ease;
     display: inline-block;
 }
-
 #shareBtn .share-text.hidden {
     opacity: 0;
     transform: translateY(5px);
 }
-/* Затемнение контейнера в GAY MODE */
-body.gay-mode .container {
-    background: rgba(13, 11, 26, 0.85);
-    backdrop-filter: blur(25px);
-    border-color: rgba(255, 255, 255, 0.2);
+
+/* Адаптивность */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+        max-width: 95%;
+    }
+
+    h1 { font-size: 1.5rem; }
+
+    #generateBtn {
+        min-width: 100%;
+        min-height: 50px;
+        font-size: 0.9rem;
+    }
+
+    .hero-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .hero-img { width: 60px; height: 60px; }
+    .hero-name { font-size: 1.3rem; }
+
+    .items-list { justify-content: center; }
+    .item { padding: 6px 30px 6px 8px; font-size: 0.8rem; }
+    .item-img { width: 28px; height: 28px; }
+
+    .build-order { grid-template-columns: 1fr; }
+
+    .talent-node { padding: 6px 8px; font-size: 0.8rem; }
+    .talent-level-number { width: 26px; height: 26px; font-size: 0.8rem; }
+
+    .slot-grid {
+        grid-template-columns: repeat(3, 80px);
+        grid-template-rows: repeat(3, 60px);
+        gap: 3px;
+        margin-bottom: 15px;
+    }
+
+    .slot-cell { width: 80px; height: 60px; }
+    .slot-item { width: 80px; height: 60px; }
+
+    .slot-grid.merged { width: 80px; height: 60px; }
+    .slot-grid.merged .slot-cell[data-index="4"] { width: 80px; height: 60px; }
+    .slot-grid.merged .slot-cell:not([data-index="4"]) { transform: translate(40px, 30px) scale(0); }
 }
