@@ -9,7 +9,7 @@ const GAY_ROULETTE_SOUND_FILE = 'sergey.mp3';
 const GAY_HOVER_SOUND_FILE = 'click.mp3';
 
 const ALLOWED_ITEM_KEYS = new Set([
-  'soul_ring', 'orb_of_corrosion', 'falcon_blade', 'power_treads', 'phase_boots', 'travel_boots',
+  'soul_ring', 'falcon_blade', 'power_treads', 'phase_boots', 'travel_boots',
   'mask_of_madness', 'hand_of_midas', 'helm_of_the_dominator', 'moon_shard', 'helm_of_the_overlord', 'travel_boots_2',
   'urn_of_shadows', 'tranquil_boots', 'pavise', 'arcane_boots', 'drum', 'mekansm', 'vladmir', 'spirit_vessel',
   'pipe', 'guardian_greaves', 'crimson_guard', 'boots_of_bearing', 'holy_locket', 'solar_crest',
