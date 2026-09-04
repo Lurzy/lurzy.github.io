@@ -9,7 +9,7 @@ const GAY_ROULETTE_SOUND_FILE = 'sergey.mp3';
 const GAY_HOVER_SOUND_FILE = 'click.mp3';
 
 const ALLOWED_ITEM_KEYS = new Set([
-  'soul_ring', 'falcon_blade', 'power_treads', 'phase_boots', 'travel_boots',
+  'soul_ring', 'orb_of_corrosion', 'falcon_blade', 'power_treads', 'phase_boots', 'travel_boots',
   'mask_of_madness', 'hand_of_midas', 'helm_of_the_dominator', 'moon_shard', 'helm_of_the_overlord', 'travel_boots_2',
   'urn_of_shadows', 'tranquil_boots', 'pavise', 'arcane_boots', 'drum', 'mekansm', 'vladmir', 'spirit_vessel',
   'pipe', 'guardian_greaves', 'crimson_guard', 'boots_of_bearing', 'holy_locket', 'solar_crest',
@@ -31,6 +31,9 @@ const BOOTS_ITEM_KEYS = new Set([
   'arcane_boots', 'travel_boots', 'travel_boots_2', 'boots', 'boots_of_bearing', 'tranquil_boots', 'phase_boots', 'power_treads', 'guardian_greaves'
 ]);
 
+const MAX_REPLACES = 10;
+const MAX_BUILDS = 5;
+
 let rouletteAudio = null;
 let gayAudio = null;
 let hoverAudio = null;
@@ -39,9 +42,11 @@ let bootsData = [];
 let regularItemsData = [];
 let isDataLoaded = false;
 
-let currentBuild = null;
+let builds = [];
+let previousBuilds = [];
+let activeBuildIndex = 0;
+
 let replaceCount = 0;
-const MAX_REPLACES = 10;
 let isRouletteActive = false;
 let draggedItemIndex = null;
 let isShareAnimating = false;
@@ -55,52 +60,378 @@ let isGayMode = false;
 let parallaxX = 0;
 let parallaxY = 0;
 
-// Функции для previousBuild
-function savePreviousBuild() {
-  if (!currentBuild) return;
-  try {
-    localStorage.setItem('previousBuild', JSON.stringify(currentBuild));
-    updateLoadPreviousBuildButton();
-  } catch (e) {
-    console.warn('Не удалось сохранить предыдущий билд:', e);
+// Скрытый ввод
+let hiddenHeroId = '';
+let hiddenItemQuery = '';
+let ctrlPressed = false;
+let forcedHeroId = null;
+let forcedItemKey = null;
+
+// ===== ЧАСТИЦЫ =====
+const particlesCanvas = document.createElement('canvas');
+particlesCanvas.id = 'particlesCanvas';
+particlesCanvas.style.cssText = `
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.8;
+`;
+document.body.prepend(particlesCanvas);
+
+const ctx = particlesCanvas.getContext('2d');
+let particles = [];
+let mouse = { x: -9999, y: -9999 };
+let particlesColor = { r: 192, g: 132, b: 252 };
+
+function initParticles() {
+  const dpr = window.devicePixelRatio || 1;
+  particlesCanvas.width = window.innerWidth * dpr;
+  particlesCanvas.height = window.innerHeight * dpr;
+  ctx.scale(dpr, dpr);
+  particles = [];
+  const count = Math.min(80, Math.floor(window.innerWidth / 20));
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      translateX: 0,
+      translateY: 0,
+      size: Math.random() * 2 + 0.5,
+      alpha: 0,
+      targetAlpha: Math.random() * 0.6 + 0.1,
+      dx: (Math.random() - 0.5) * 0.2,
+      dy: (Math.random() - 0.5) * 0.2,
+      magnetism: 0.1 + Math.random() * 4
+    });
+  }
+  drawParticlesFrame();
+  requestAnimationFrame(animateParticles);
+}
+
+function drawParticle(p) {
+  ctx.beginPath();
+  ctx.arc(p.x + p.translateX, p.y + p.translateY, p.size, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(${particlesColor.r}, ${particlesColor.g}, ${particlesColor.b}, ${p.alpha})`;
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = `rgba(${particlesColor.r}, ${particlesColor.g}, ${particlesColor.b}, ${p.alpha})`;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function drawParticlesFrame() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  particles.forEach(drawParticle);
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  particles.forEach((p, i) => {
+    const edge = [
+      p.x + p.translateX - p.size,
+      w - p.x - p.translateX - p.size,
+      p.y + p.translateY - p.size,
+      h - p.y - p.translateY - p.size
+    ];
+    const closestEdge = Math.min(...edge);
+    const remapClosestEdge = Math.max(0, Math.min(1, closestEdge / 20));
+
+    if (remapClosestEdge > 1) {
+      p.alpha += 0.02;
+      if (p.alpha > p.targetAlpha) p.alpha = p.targetAlpha;
+    } else {
+      p.alpha = p.targetAlpha * remapClosestEdge;
+    }
+
+    p.x += p.dx;
+    p.y += p.dy;
+    const dxMouse = (mouse.x - w / 2) / 50;
+    const dyMouse = (mouse.y - h / 2) / 50;
+    p.translateX += (dxMouse * p.magnetism - p.translateX) / 10;
+    p.translateY += (dyMouse * p.magnetism - p.translateY) / 10;
+
+    drawParticle(p);
+
+    if (p.x < -p.size || p.x > w + p.size || p.y < -p.size || p.y > h + p.size) {
+      particles.splice(i, 1);
+      particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        translateX: 0,
+        translateY: 0,
+        size: Math.random() * 2 + 0.5,
+        alpha: 0,
+        targetAlpha: Math.random() * 0.6 + 0.1,
+        dx: (Math.random() - 0.5) * 0.2,
+        dy: (Math.random() - 0.5) * 0.2,
+        magnetism: 0.1 + Math.random() * 4
+      });
+    }
+  });
+
+  requestAnimationFrame(animateParticles);
+}
+
+window.addEventListener('resize', () => {
+  initParticles();
+});
+
+window.addEventListener('mousemove', (e) => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+initParticles();
+// ===== КОНЕЦ ЧАСТИЦ =====
+
+// ===== МУЛЬТИ-БИЛД =====
+function getActiveBuild() {
+  return builds[activeBuildIndex] || null;
+}
+
+function setActiveBuildIndex(index) {
+  if (index >= 0 && index < builds.length) {
+    activeBuildIndex = index;
+    localStorage.setItem('activeBuildIndex', index);
+    const build = getActiveBuild();
+    if (build) {
+      replaceCount = build.replaceCount !== undefined ? build.replaceCount : 0;
+    } else {
+      replaceCount = 0;
+    }
+    renderBuildTabs();
+    renderBuild(false);
   }
 }
 
-function loadPreviousBuildFromStorage() {
+function addBuild() {
+  if (builds.length >= MAX_BUILDS) return;
+  builds.push(null);
+  previousBuilds.push(null);
+  activeBuildIndex = builds.length - 1;
+  localStorage.setItem('builds', JSON.stringify(builds));
+  localStorage.setItem('previousBuilds', JSON.stringify(previousBuilds));
+  localStorage.setItem('activeBuildIndex', activeBuildIndex);
+  generateBuildForActiveSlot();
+  renderBuildTabs(); // Исправлено: сразу обновляем вкладки
+}
+
+function removeBuild(index) {
+  if (builds.length <= 1) return;
+  builds.splice(index, 1);
+  previousBuilds.splice(index, 1);
+  if (activeBuildIndex >= builds.length) activeBuildIndex = builds.length - 1;
+  localStorage.setItem('builds', JSON.stringify(builds));
+  localStorage.setItem('previousBuilds', JSON.stringify(previousBuilds));
+  localStorage.setItem('activeBuildIndex', activeBuildIndex);
+  const build = getActiveBuild();
+  if (build) {
+    replaceCount = build.replaceCount !== undefined ? build.replaceCount : 0;
+  } else {
+    replaceCount = 0;
+  }
+  renderBuildTabs();
+  renderBuild(false);
+}
+
+function renderBuildTabs() {
+  const container = document.getElementById('buildsTabs');
+  if (!container) return;
+  container.innerHTML = '';
+  builds.forEach((build, index) => {
+    const dot = document.createElement('div');
+    dot.className = 'build-dot' + (index === activeBuildIndex ? ' active' : '');
+    if (build && build.hero) {
+      const img = document.createElement('img');
+      img.src = build.hero.img;
+      img.alt = build.hero.name;
+      dot.appendChild(img);
+    } else {
+      dot.textContent = '?';
+    }
+    dot.addEventListener('click', () => setActiveBuildIndex(index));
+    dot.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      removeBuild(index);
+    });
+    container.appendChild(dot);
+  });
+  if (builds.length < MAX_BUILDS) {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'build-dot-add';
+    addBtn.textContent = '+';
+    addBtn.addEventListener('click', addBuild);
+    container.appendChild(addBtn);
+  }
+}
+
+function loadBuildsFromStorage() {
   try {
-    const saved = localStorage.getItem('previousBuild');
-    if (!saved) return null;
-    const parsed = JSON.parse(saved);
-    const hero = heroesData.find(h => h.name === parsed.hero.name);
-    if (hero) {
-      return {
-        hero: hero,
-        items: parsed.items,
-        buildOrder: parsed.buildOrder,
-        talents: parsed.talents
-      };
+    const saved = localStorage.getItem('builds');
+    if (saved) {
+      builds = JSON.parse(saved);
+      builds = builds.map(b => {
+        if (b && b.hero && b.hero.name) {
+          const hero = heroesData.find(h => h.name === b.hero.name);
+          if (hero) b.hero = hero;
+          else return null;
+          if (b.replaceCount === undefined) b.replaceCount = 0;
+        }
+        return b;
+      }).filter(b => b !== null);
+    }
+    const savedPrev = localStorage.getItem('previousBuilds');
+    if (savedPrev) {
+      previousBuilds = JSON.parse(savedPrev);
+    }
+    const savedIndex = localStorage.getItem('activeBuildIndex');
+    if (savedIndex !== null) {
+      activeBuildIndex = parseInt(savedIndex, 10);
+      if (activeBuildIndex >= builds.length) activeBuildIndex = 0;
     }
   } catch (e) {
-    console.warn('Ошибка загрузки предыдущего билда:', e);
+    console.warn('Ошибка загрузки билдов из localStorage:', e);
   }
-  return null;
 }
 
-function deletePreviousBuild() {
-  localStorage.removeItem('previousBuild');
-  updateLoadPreviousBuildButton();
+function saveBuildsToStorage() {
+  try {
+    localStorage.setItem('builds', JSON.stringify(builds));
+    localStorage.setItem('previousBuilds', JSON.stringify(previousBuilds));
+    localStorage.setItem('activeBuildIndex', activeBuildIndex);
+  } catch (e) {
+    console.warn('Не удалось сохранить билды:', e);
+  }
+}
+
+function generateBuildForActiveSlot() {
+  if (!isDataLoaded) return;
+  let hero;
+
+  if (hiddenHeroId) {
+    const id = parseInt(hiddenHeroId, 10);
+    hero = heroesData.find(h => h.id === id);
+    hiddenHeroId = '';
+  }
+
+  if (!hero) {
+    hero = randomElement(heroesData);
+  }
+
+  const newBuild = createBuildForHero(hero);
+  newBuild.replaceCount = 0;
+  builds[activeBuildIndex] = newBuild;
+  replaceCount = 0;
+  saveBuildsToStorage();
+  renderBuild(true);
+  renderBuildTabs(); // Исправлено: после генерации обновляем вкладки
+}
+
+function savePreviousBuildForActive() {
+  if (builds[activeBuildIndex]) {
+    previousBuilds[activeBuildIndex] = builds[activeBuildIndex];
+    saveBuildsToStorage();
+  }
+}
+
+function loadPreviousBuildForActive() {
+  const prev = previousBuilds[activeBuildIndex];
+  if (prev) {
+    builds[activeBuildIndex] = prev;
+    previousBuilds[activeBuildIndex] = null;
+    replaceCount = prev.replaceCount || 0;
+    saveBuildsToStorage();
+    renderBuild(false);
+    updateLoadPreviousBuildButton();
+  }
 }
 
 function updateLoadPreviousBuildButton() {
   const btn = document.getElementById('loadPreviousBuildBtn');
   if (!btn) return;
-  const hasPrevious = !!localStorage.getItem('previousBuild');
-  if (hasPrevious) {
+  if (previousBuilds[activeBuildIndex]) {
     btn.classList.remove('hidden');
   } else {
     btn.classList.add('hidden');
   }
 }
+// ===== КОНЕЦ МУЛЬТИ-БИЛД =====
+
+// ===== СКРЫТЫЙ ВВОД =====
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Control') {
+    ctrlPressed = true;
+    hiddenItemQuery = '';
+    e.preventDefault();
+    return;
+  }
+  if (ctrlPressed) {
+    if (e.key.length === 1 && !e.altKey && !e.metaKey) {
+      hiddenItemQuery += e.key.toLowerCase();
+      e.preventDefault();
+    }
+  } else {
+    if (/^\d$/.test(e.key)) {
+      hiddenHeroId += e.key;
+      e.preventDefault();
+    }
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  if (e.key === 'Control') {
+    ctrlPressed = false;
+    if (hiddenItemQuery.length > 0) {
+      const allItems = [...regularItemsData, ...bootsData];
+      const bestMatch = findBestItemMatch(hiddenItemQuery, allItems);
+      if (bestMatch) forcedItemKey = bestMatch.key;
+      hiddenItemQuery = '';
+    }
+  }
+});
+
+function findBestItemMatch(query, items) {
+  const q = query.toLowerCase().replace(/\s+/g, '');
+  if (!q) return null;
+  let exact = items.find(item => item.name.toLowerCase() === q || item.key.toLowerCase() === q);
+  if (exact) return exact;
+  let substring = items.filter(item => item.name.toLowerCase().includes(q) || item.key.toLowerCase().includes(q));
+  if (substring.length > 0) {
+    substring.sort((a, b) => a.name.length - b.name.length);
+    return substring[0];
+  }
+  let best = null;
+  let bestDistance = Infinity;
+  for (const item of items) {
+    const distance = levenshteinDistance(q, item.name.toLowerCase());
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = item;
+    }
+  }
+  if (best && bestDistance <= Math.max(3, q.length / 2)) return best;
+  return null;
+}
+
+function levenshteinDistance(a, b) {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b[i - 1] === a[j - 1]) matrix[i][j] = matrix[i - 1][j - 1];
+      else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+    }
+  }
+  return matrix[b.length][a.length];
+}
+// ===== КОНЕЦ СКРЫТОГО ВВОДА =====
 
 async function loadData() {
   try {
@@ -208,23 +539,21 @@ async function loadData() {
     document.getElementById('status').textContent = `Героев: ${heroesData.length}, предметов: ${regularItemsData.length}, ботинок: ${bootsData.length}`;
     console.log(`Загружено героев: ${heroesData.length}, обычных предметов: ${regularItemsData.length}, ботинок: ${bootsData.length}`);
 
-    // Проверяем, есть ли build в URL
-    const buildParam = urlParams.get('build');
-    if (buildParam) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(buildParam))));
-        const hero = heroesData.find(h => h.name === decoded.heroName);
-        if (hero) {
-          currentBuild = { hero, items: decoded.items, buildOrder: decoded.buildOrder, talents: decoded.talents };
-          replaceCount = 0;
-          renderBuild(true);
-        }
-      } catch (e) {
-        console.warn('Не удалось восстановить билд из URL:', e);
-        generateBuildForRandomHero();
-      }
+    // Инициализация билдов
+    loadBuildsFromStorage();
+    if (builds.length === 0) {
+      builds.push(null);
+      previousBuilds.push(null);
+      activeBuildIndex = 0;
+      generateBuildForActiveSlot();
     } else {
-      generateBuildForRandomHero();
+      renderBuildTabs();
+      if (builds[activeBuildIndex]) {
+        replaceCount = builds[activeBuildIndex].replaceCount || 0;
+        renderBuild(false);
+      } else {
+        generateBuildForActiveSlot();
+      }
     }
     updateLoadPreviousBuildButton();
   } catch (e) {
@@ -320,50 +649,70 @@ function createBuildForHero(hero) {
   return { hero, items: buildItems(), buildOrder: order, talents };
 }
 
-function generateBuildForRandomHero() {
-  if (!isDataLoaded) return;
-  const hero = randomElement(heroesData);
-  currentBuild = createBuildForHero(hero);
-  replaceCount = 0;
-  closeModal();
-  renderBuild(true);
-}
-
 function replaceItem(index) {
-  if (!currentBuild || isRouletteActive) return;
-  if (replaceCount >= MAX_REPLACES) { showModal(); return; }
+  const build = getActiveBuild();
+  if (!build || isRouletteActive) return;
+  if (build.replaceCount >= MAX_REPLACES) { showModal(); return; }
 
   if (index === 0) {
-    currentBuild.items[0] = getRandomBoot(currentBuild.items[0].key);
+    if (forcedItemKey && BOOTS_ITEM_KEYS.has(forcedItemKey)) {
+      build.items[0] = bootsData.find(b => b.key === forcedItemKey);
+      forcedItemKey = null;
+    } else {
+      build.items[0] = getRandomBoot(build.items[0].key);
+    }
   } else {
-    currentBuild.items[index] = getRandomRegularItem();
+    if (forcedItemKey && !BOOTS_ITEM_KEYS.has(forcedItemKey)) {
+      build.items[index] = regularItemsData.find(i => i.key === forcedItemKey);
+      forcedItemKey = null;
+    } else {
+      build.items[index] = getRandomRegularItem();
+    }
   }
-  replaceCount++;
+  build.replaceCount++;
+  replaceCount = build.replaceCount;
+  saveBuildsToStorage();
   renderBuild(false);
 }
 
 function replaceItemWithoutCost(index) {
-  if (!currentBuild || isRouletteActive) return;
+  const build = getActiveBuild();
+  if (!build || isRouletteActive) return;
   if (index === 0) {
-    currentBuild.items[0] = getRandomBoot(currentBuild.items[0].key);
+    if (forcedItemKey && BOOTS_ITEM_KEYS.has(forcedItemKey)) {
+      build.items[0] = bootsData.find(b => b.key === forcedItemKey);
+      forcedItemKey = null;
+    } else {
+      build.items[0] = getRandomBoot(build.items[0].key);
+    }
   } else {
-    currentBuild.items[index] = getRandomRegularItem();
+    if (forcedItemKey && !BOOTS_ITEM_KEYS.has(forcedItemKey)) {
+      build.items[index] = regularItemsData.find(i => i.key === forcedItemKey);
+      forcedItemKey = null;
+    } else {
+      build.items[index] = getRandomRegularItem();
+    }
   }
+  saveBuildsToStorage();
   renderBuild(false);
 }
 
 function renderBuild(animate = false) {
-  if (!currentBuild) return;
-  const { hero, items, buildOrder, talents } = currentBuild;
+  const build = getActiveBuild();
+  if (!build) return;
+
+  const { hero, items, buildOrder, talents } = build;
+  const currentReplaceCount = build.replaceCount !== undefined ? build.replaceCount : 0;
+  replaceCount = currentReplaceCount;
 
   let html = `
     <div class="hero-header">
       <img class="hero-img" src="${hero.img}" alt="${hero.name}">
       <span class="hero-name">${hero.name}</span>
-      <button id="loadPreviousBuildBtn" class="hero-back-btn hidden">↩ Прошлый билд</button>
+      <button id="loadPreviousBuildBtn" class="hero-back-btn hidden">↩ Предыдущий билд</button>
     </div>
     <div class="section">
-      <h3>Предметы <span class="replace-counter">(Осталось замен: ${MAX_REPLACES - replaceCount})</span></h3>
+      <h3>Предметы <span class="replace-counter">(Осталось замен: ${MAX_REPLACES - currentReplaceCount})</span></h3>
       <div class="items-list" id="itemsList">`;
 
   items.forEach((item, index) => {
@@ -426,26 +775,14 @@ function renderBuild(animate = false) {
     shareBuild('text');
   });
 
-  // Обработчик кнопки возврата
   const loadPrevBtn = document.getElementById('loadPreviousBuildBtn');
   if (loadPrevBtn) {
-    loadPrevBtn.addEventListener('click', function() {
-      const prevBuild = loadPreviousBuildFromStorage();
-      if (prevBuild) {
-        currentBuild = prevBuild;
-        replaceCount = 0;
-        deletePreviousBuild();
-        renderBuild(false);
-      }
-    });
-    if (localStorage.getItem('previousBuild')) {
-      loadPrevBtn.classList.remove('hidden');
-    } else {
-      loadPrevBtn.classList.add('hidden');
-    }
+    loadPrevBtn.addEventListener('click', loadPreviousBuildForActive);
+    updateLoadPreviousBuildButton();
   }
 
   attachDragAndDropHandlers();
+  updateLoadPreviousBuildButton();
 }
 
 function attachDragAndDropHandlers() {
@@ -491,14 +828,17 @@ function attachDragAndDropHandlers() {
     const targetIndex = parseInt(target.dataset.index);
     if (targetIndex === 0 || targetIndex === draggedItemIndex) return;
 
-    const items = currentBuild.items;
+    const build = getActiveBuild();
+    const items = build.items;
     [items[draggedItemIndex], items[targetIndex]] = [items[targetIndex], items[draggedItemIndex]];
+    saveBuildsToStorage();
     renderBuild(false);
   });
 }
 
 function shareBuild(mode = 'link') {
-  if (!currentBuild || isShareAnimating) return;
+  const build = getActiveBuild();
+  if (!build || isShareAnimating) return;
 
   const btn = document.getElementById('shareBtn');
   const textSpan = btn.querySelector('.share-text');
@@ -509,16 +849,16 @@ function shareBuild(mode = 'link') {
   let contentToCopy = '';
   if (mode === 'link') {
     const data = {
-      heroName: currentBuild.hero.name,
-      items: currentBuild.items,
-      buildOrder: currentBuild.buildOrder,
-      talents: currentBuild.talents
+      heroName: build.hero.name,
+      items: build.items,
+      buildOrder: build.buildOrder,
+      talents: build.talents
     };
     const json = JSON.stringify(data);
     const encoded = btoa(unescape(encodeURIComponent(json)));
     contentToCopy = `${window.location.origin}${window.location.pathname}?build=${encoded}`;
   } else {
-    contentToCopy = buildTextDescription();
+    contentToCopy = buildTextDescription(build);
   }
 
   navigator.clipboard.writeText(contentToCopy).then(() => {
@@ -546,17 +886,17 @@ function shareBuild(mode = 'link') {
   });
 }
 
-function buildTextDescription() {
-  const hero = currentBuild.hero.name;
-  const items = currentBuild.items.map(i => i.name).join(', ');
-  const talents = currentBuild.talents;
+function buildTextDescription(build) {
+  const hero = build.hero.name;
+  const items = build.items.map(i => i.name).join(', ');
+  const talents = build.talents;
   const talentLevels = [10, 15, 20, 25];
   const sides = [];
 
   talentLevels.forEach(level => {
     const selected = talents.find(t => t.level === level);
     if (!selected) return;
-    const tl = currentBuild.hero.talents[level] || [];
+    const tl = build.hero.talents[level] || [];
     const left = tl[1] || '';
     const right = tl[0] || '';
     if (selected.value === left) sides.push('Лево');
@@ -570,15 +910,27 @@ function buildTextDescription() {
 function startRoulette() {
   if (!isDataLoaded || isRouletteActive) return;
 
-  // Сохраняем текущий билд как предыдущий перед генерацией нового
-  savePreviousBuild();
+  // Сохраняем предыдущий билд для активного слота
+  savePreviousBuildForActive();
 
   isRouletteActive = true;
   replaceCount = 0;
   closeModal();
 
-  const targetHero = randomElement(heroesData);
-  currentBuild = createBuildForHero(targetHero);
+  let targetHero;
+
+  if (hiddenHeroId) {
+    const id = parseInt(hiddenHeroId, 10);
+    targetHero = heroesData.find(h => h.id === id);
+    hiddenHeroId = '';
+  }
+
+  if (!targetHero) {
+    targetHero = randomElement(heroesData);
+  }
+
+  const newBuild = createBuildForHero(targetHero);
+  newBuild.replaceCount = 0;
 
   const overlay = document.getElementById('rouletteOverlay');
   overlay.classList.add('active');
@@ -647,6 +999,8 @@ function startRoulette() {
     grid.classList.add('merged');
     document.getElementById('startBuildBtn').classList.remove('hidden');
     createConfetti();
+    builds[activeBuildIndex] = newBuild;
+    saveBuildsToStorage();
   }, 5000);
 }
 
@@ -679,13 +1033,19 @@ function createConfetti() {
   }
 }
 
-// GAY MODE переключатель
+// GAY MODE
 const gayModeToggle = document.getElementById('gayModeToggle');
 gayModeToggle.addEventListener('click', function(e) {
   e.stopPropagation();
   isGayMode = !isGayMode;
   document.body.classList.toggle('gay-mode', isGayMode);
   this.classList.toggle('active', isGayMode);
+
+  if (isGayMode) {
+    particlesColor = { r: 255, g: 0, b: 204 };
+  } else {
+    particlesColor = { r: 192, g: 132, b: 252 };
+  }
 
   if (hoverAudio) {
     hoverAudio.pause();
@@ -694,7 +1054,6 @@ gayModeToggle.addEventListener('click', function(e) {
   }
 });
 
-// Звук при клике в GAY MODE
 document.addEventListener('click', function(e) {
   if (isGayMode) {
     try {
@@ -711,7 +1070,6 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Звук при наведении на кнопку "Сгенерировать билд"
 const generateBtn = document.getElementById('generateBtn');
 
 generateBtn.addEventListener('mouseenter', function() {
@@ -739,7 +1097,6 @@ generateBtn.addEventListener('mouseleave', function() {
   }
 });
 
-// Параллакс
 document.addEventListener('mousemove', function(e) {
   const x = (e.clientX / window.innerWidth - 0.5) * 2;
   const y = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -749,7 +1106,6 @@ document.addEventListener('mousemove', function(e) {
   document.documentElement.style.setProperty('--parallax-y', `${parallaxY}px`);
 });
 
-// Контекстное меню для бесплатной замены
 document.addEventListener('contextmenu', function(e) {
   const itemEl = e.target.closest('.item');
   if (itemEl && !isRouletteActive) {
