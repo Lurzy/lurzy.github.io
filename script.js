@@ -219,7 +219,7 @@ function addBuild() {
   localStorage.setItem('previousBuilds', JSON.stringify(previousBuilds));
   localStorage.setItem('activeBuildIndex', activeBuildIndex);
   generateBuildForActiveSlot();
-  renderBuildTabs(); // Исправлено: сразу обновляем вкладки
+  renderBuildTabs(); // Обновляем вкладки сразу
 }
 
 function removeBuild(index) {
@@ -330,7 +330,7 @@ function generateBuildForActiveSlot() {
   replaceCount = 0;
   saveBuildsToStorage();
   renderBuild(true);
-  renderBuildTabs(); // Исправлено: после генерации обновляем вкладки
+  renderBuildTabs(); // Обновляем вкладки после генерации
 }
 
 function savePreviousBuildForActive() {
@@ -1001,6 +1001,7 @@ function startRoulette() {
     createConfetti();
     builds[activeBuildIndex] = newBuild;
     saveBuildsToStorage();
+    renderBuildTabs(); // Обновляем вкладки после рулетки
   }, 5000);
 }
 
@@ -1014,6 +1015,7 @@ document.getElementById('startBuildBtn').addEventListener('click', function() {
   if (rouletteAudio) { rouletteAudio.pause(); rouletteAudio.currentTime = 0; rouletteAudio = null; }
   document.getElementById('casinoBg').classList.remove('show');
   renderBuild(true);
+  renderBuildTabs(); // Обновляем вкладки после показа билда
   isRouletteActive = false;
 });
 
