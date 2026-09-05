@@ -1,10 +1,13 @@
 // Флаг: true — использовать локальные JSON из папки data/, false — загружать с CDN
-const USE_LOCAL_DATA = false;
+export const USE_LOCAL_DATA = true;
 
-export const heroesUrl = USE_LOCAL_DATA ? './data/heroes.json' : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/heroes.json';
-export const abilitiesUrl = USE_LOCAL_DATA ? './data/abilities.json' : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/abilities.json';
-export const heroAbilitiesUrl = USE_LOCAL_DATA ? './data/hero_abilities.json' : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/hero_abilities.json';
-export const itemsUrl = USE_LOCAL_DATA ? './data/items.json' : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/items.json';
+export const localHeroAbilitiesUrl = './data/heroAbilities.json';
+export const localItemsUrl = './data/items.json';
+
+export const heroesUrl = USE_LOCAL_DATA ? null : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/heroes.json';
+export const abilitiesUrl = USE_LOCAL_DATA ? null : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/abilities.json';
+export const heroAbilitiesUrl = USE_LOCAL_DATA ? null : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/hero_abilities.json';
+export const itemsUrl = USE_LOCAL_DATA ? localItemsUrl : 'https://cdn.jsdelivr.net/gh/odota/dotaconstants/build/items.json';
 
 // Константы, используемые в проекте
 export const CDN_BASE = 'https://cdn.cloudflare.steamstatic.com';
