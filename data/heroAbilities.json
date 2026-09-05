@@ -2864,6 +2864,118 @@
       }
     ]
   },
+  "115": {
+    "name": "Сергуня",
+    "heroImg": "img/skill1.png",
+    "abilities": [
+      {
+        "name": "Отсос хуя",
+        "img": "img/skill1.png"
+      },
+      {
+        "name": "Анал",
+        "img": "img/skill1.png"
+      },
+      {
+        "name": "Фистинг",
+        "img": "img/skill1.png"
+      }
+    ],
+    "ultimate": {     
+        "name": "Игра сисечками",
+        "img": "img/skill1.png"
+    },
+    "talents": [
+      {
+        "name": "+2 яйца в рот",
+        "level": 1
+      },
+      {
+        "name": "+10см к рендже горла",
+        "level": 1
+      },
+      {
+        "name": "Увеличение груди",
+        "level": 2
+      },
+      {
+        "name": "Удаление 2 ребер",
+        "level": 2
+      },
+      {
+        "name": "+10 к гибкости",
+        "level": 3
+      },
+      {
+        "name": "+100 к СпермоРегену",
+        "level": 3
+      },
+      {
+        "name": "-20s перезарядки отсоса",
+        "level": 4
+      },
+      {
+        "name": "+50 к глубине очка",
+        "level": 4
+      }
+    ]
+  },
+  "224": {
+    "name": "Сергуня",
+    "heroImg": "img/skill1.png",
+    "abilities": [
+      {
+        "name": "Отсос хуя",
+        "img": "img/skill1.png"
+      },
+      {
+        "name": "Анал",
+        "img": "img/skill1.png"
+      },
+      {
+        "name": "Фистинг",
+        "img": "img/skill1.png"
+      }
+    ],
+    "ultimate": {     
+        "name": "Игра сисечками",
+        "img": "img/skill1.png"
+    },
+    "talents": [
+      {
+        "name": "+2 яйца в рот",
+        "level": 1
+      },
+      {
+        "name": "+10см к рендже горла",
+        "level": 1
+      },
+      {
+        "name": "Увеличение груди",
+        "level": 2
+      },
+      {
+        "name": "Удаление 2 ребер",
+        "level": 2
+      },
+      {
+        "name": "+10 к гибкости",
+        "level": 3
+      },
+      {
+        "name": "+100 к СпермоРегену",
+        "level": 3
+      },
+      {
+        "name": "-20s перезарядки отсоса",
+        "level": 4
+      },
+      {
+        "name": "+50 к глубине очка",
+        "level": 4
+      }
+    ]
+  },
   "223": {
     "name": "Сергуня",
     "heroImg": "img/skill1.png",
