@@ -1033,25 +1033,13 @@
       {
         "name": "Tree Grab",
         "img": "/apps/dota2/images/dota_react/abilities/tiny_tree_grab.png"
-      },
-      {
-        "name": "Tree Volley",
-        "img": "/apps/dota2/images/dota_react/abilities/tiny_tree_channel.png"
-      },
-      {
-        "name": "Insurmountable",
-        "img": "/apps/dota2/images/dota_react/abilities/tiny_insurmountable.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Grow",
         "img": "/apps/dota2/images/dota_react/abilities/tiny_grow.png"
       },
-      {
-        "name": "Tree Throw",
-        "img": "/apps/dota2/images/dota_react/abilities/tiny_toss_tree.png"
-      }
-    ],
-    "ultimate": {},
     "talents": [
       {
         "name": "+150 Avalanche Cast Range",
@@ -1102,21 +1090,13 @@
       {
         "name": "Vengeance Aura",
         "img": "/apps/dota2/images/dota_react/abilities/vengefulspirit_command_aura.png"
-      },
-      {
-        "name": "Retribution",
-        "img": "/apps/dota2/images/dota_react/abilities/vengefulspirit_retribution.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Nether Swap",
         "img": "/apps/dota2/images/dota_react/abilities/vengefulspirit_nether_swap.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+150 Nether Swap Enemy Damage",
@@ -1167,25 +1147,13 @@
       {
         "name": "Windrun",
         "img": "/apps/dota2/images/dota_react/abilities/windrunner_windrun.png"
-      },
-      {
-        "name": "Gale Force",
-        "img": "/apps/dota2/images/dota_react/abilities/windrunner_gale_force.png"
-      },
-      {
-        "name": "Focus Fire Cancel",
-        "img": "/apps/dota2/images/dota_react/abilities/windrunner_focusfire_cancel.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Focus Fire",
         "img": "/apps/dota2/images/dota_react/abilities/windrunner_focusfire.png"
       },
-      {
-        "name": "Tailwind",
-        "img": "/apps/dota2/images/dota_react/abilities/windrunner_tailwind.png"
-      }
-    ],
-    "ultimate": {},
     "talents": [
       {
         "name": "+1s Powershot Slow Duration",
@@ -1236,25 +1204,13 @@
       {
         "name": "Heavenly Jump",
         "img": "/apps/dota2/images/dota_react/abilities/zuus_heavenly_jump.png"
-      },
-      {
-        "name": "Nimbus",
-        "img": "/apps/dota2/images/dota_react/abilities/zuus_cloud.png"
-      },
-      {
-        "name": "Lightning Hands",
-        "img": "/apps/dota2/images/dota_react/abilities/zuus_lightning_hands.png"
-      },
-      {
+      }
+  
+    ],
+    "ultimate": {
         "name": "Thundergod's Wrath",
         "img": "/apps/dota2/images/dota_react/abilities/zuus_thundergods_wrath.png"
       },
-      {
-        "name": "Static Field",
-        "img": "/apps/dota2/images/dota_react/abilities/zuus_static_field.png"
-      }
-    ],
-    "ultimate": {},
     "talents": [
       {
         "name": "+1 Heavenly Jump Target",
@@ -1305,25 +1261,12 @@
       {
         "name": "X Marks the Spot",
         "img": "/apps/dota2/images/dota_react/abilities/kunkka_x_marks_the_spot.png"
-      },
-      {
-        "name": "Admiral's Rum",
-        "img": "/apps/dota2/images/dota_react/abilities/kunkka_admirals_rum.png"
-      },
-      {
-        "name": "Tidal Wave",
-        "img": "/apps/dota2/images/dota_react/abilities/kunkka_tidal_wave.png"
-      },
-      {
+      }
+    ],
+    "ultimate": {
         "name": "Ghostship",
         "img": "/apps/dota2/images/dota_react/abilities/kunkka_ghostship.png"
       },
-      {
-        "name": "Return",
-        "img": "/apps/dota2/images/dota_react/abilities/kunkka_return.png"
-      }
-    ],
-    "ultimate": {},
     "talents": [
       {
         "name": "+1s Admiral's Rum Buff Duration",
@@ -1374,21 +1317,13 @@
       {
         "name": "Fiery Soul",
         "img": "/apps/dota2/images/dota_react/abilities/lina_fiery_soul.png"
-      },
-      {
-        "name": "Flame Cloak",
-        "img": "/apps/dota2/images/dota_react/abilities/lina_flame_cloak.png"
-      },
-      {
-        "name": "Slow Burn",
-        "img": "/apps/dota2/images/dota_react/abilities/lina_slow_burn.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Laguna Blade",
         "img": "/apps/dota2/images/dota_react/abilities/lina_laguna_blade.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+25 Damage",
@@ -1439,21 +1374,13 @@
       {
         "name": "Mana Drain",
         "img": "/apps/dota2/images/dota_react/abilities/lion_mana_drain.png"
-      },
-      {
-        "name": "To Hell and Back",
-        "img": "/apps/dota2/images/dota_react/abilities/lion_to_hell_and_back.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Finger of Death",
         "img": "/apps/dota2/images/dota_react/abilities/lion_finger_of_death.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+10% Mana Drain Slow",
@@ -1504,21 +1431,13 @@
       {
         "name": "Shackles",
         "img": "/apps/dota2/images/dota_react/abilities/shadow_shaman_shackles.png"
-      },
-      {
-        "name": "Fowl Play",
-        "img": "/apps/dota2/images/dota_react/abilities/shadow_shaman_fowl_play.png"
-      },
-      {
-        "name": "Urnaconda",
-        "img": "/apps/dota2/images/dota_react/abilities/shadow_shaman_urnaconda.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Mass Serpent Ward",
         "img": "/apps/dota2/images/dota_react/abilities/shadow_shaman_mass_serpent_ward.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+170 Shackles Total Damage",
@@ -1569,21 +1488,13 @@
       {
         "name": "Bash of the Deep",
         "img": "/apps/dota2/images/dota_react/abilities/slardar_bash.png"
-      },
-      {
-        "name": "Seaborn Sentinel",
-        "img": "/apps/dota2/images/dota_react/abilities/slardar_seaborn_sentinel.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Corrosive Haze",
         "img": "/apps/dota2/images/dota_react/abilities/slardar_amplify_damage.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+2s Guardian Sprint Duration",
@@ -1634,25 +1545,12 @@
       {
         "name": "Anchor Smash",
         "img": "/apps/dota2/images/dota_react/abilities/tidehunter_anchor_smash.png"
-      },
-      {
-        "name": "Dead in the Water",
-        "img": "/apps/dota2/images/dota_react/abilities/tidehunter_dead_in_the_water.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+    ],
+    "ultimate": {
         "name": "Ravage",
         "img": "/apps/dota2/images/dota_react/abilities/tidehunter_ravage.png"
       },
-      {
-        "name": "tidehunter_krill_eater",
-        "img": ""
-      }
-    ],
-    "ultimate": {},
     "talents": [
       {
         "name": "+10% Anchor Smash Damage Reduction",
@@ -1703,21 +1601,13 @@
       {
         "name": "Maledict",
         "img": "/apps/dota2/images/dota_react/abilities/witch_doctor_maledict.png"
-      },
-      {
-        "name": "Voodoo Switcheroo",
-        "img": "/apps/dota2/images/dota_react/abilities/witch_doctor_voodoo_switcheroo.png"
-      },
-      {
-        "name": "Gris-Gris",
-        "img": "/apps/dota2/images/dota_react/abilities/witch_doctor_gris_gris.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Death Ward",
         "img": "/apps/dota2/images/dota_react/abilities/witch_doctor_death_ward.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "-25% Voodoo Restoration Mana Per Second",
@@ -1768,21 +1658,13 @@
       {
         "name": "Sinister Gaze",
         "img": "/apps/dota2/images/dota_react/abilities/lich_sinister_gaze.png"
-      },
-      {
-        "name": "Ice Spire",
-        "img": "/apps/dota2/images/dota_react/abilities/lich_ice_spire.png"
-      },
-      {
-        "name": "Sacrifice",
-        "img": "/apps/dota2/images/dota_react/abilities/lich_death_charge.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Chain Frost",
         "img": "/apps/dota2/images/dota_react/abilities/lich_chain_frost.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+10% Frost Shield Damage Reduction",
@@ -1833,21 +1715,12 @@
       {
         "name": "Tricks of the Trade",
         "img": "/apps/dota2/images/dota_react/abilities/riki_tricks_of_the_trade.png"
-      },
-      {
-        "name": "Backstab",
-        "img": "/apps/dota2/images/dota_react/abilities/riki_innate_backstab.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
-        "name": "Cloak and Dagger",
-        "img": "/apps/dota2/images/dota_react/abilities/riki_backstab.png"
       }
     ],
-    "ultimate": {},
+    "ultimate": {
+        "name": "Cloak and Dagger",
+        "img": "/apps/dota2/images/dota_react/abilities/riki_backstab.png"
+      },
     "talents": [
       {
         "name": "+50 Smoke Screen Radius",
@@ -1898,21 +1771,12 @@
       {
         "name": "Midnight Pulse",
         "img": "/apps/dota2/images/dota_react/abilities/enigma_midnight_pulse.png"
-      },
-      {
-        "name": "Event Horizon",
-        "img": "/apps/dota2/images/dota_react/abilities/enigma_event_horizon.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
-        "name": "Black Hole",
-        "img": "/apps/dota2/images/dota_react/abilities/enigma_black_hole.png"
       }
     ],
-    "ultimate": {},
+    "ultimate": {
+        "name": "Black Hole",
+        "img": "/apps/dota2/images/dota_react/abilities/enigma_black_hole.png"
+      },
     "talents": [
       {
         "name": "+10 Eidolon Attack Speed",
@@ -1963,25 +1827,12 @@
       {
         "name": "Deploy Turrets",
         "img": "/apps/dota2/images/dota_react/abilities/tinker_deploy_turrets.png"
-      },
-      {
-        "name": "Warp Flare",
-        "img": "/apps/dota2/images/dota_react/abilities/tinker_warp_grenade.png"
-      },
-      {
-        "name": "Keen Conveyance",
-        "img": "/apps/dota2/images/dota_react/abilities/tinker_keen_teleport.png"
-      },
-      {
+      }
+    ],
+    "ultimate": {
         "name": "Rearm",
         "img": "/apps/dota2/images/dota_react/abilities/tinker_rearm.png"
       },
-      {
-        "name": "Eureka!",
-        "img": "/apps/dota2/images/dota_react/abilities/tinker_eureka.png"
-      }
-    ],
-    "ultimate": {},
     "talents": [
       {
         "name": "+1.0s March of the Machines Duration",
@@ -2032,21 +1883,13 @@
       {
         "name": "Take Aim",
         "img": "/apps/dota2/images/dota_react/abilities/sniper_take_aim.png"
-      },
-      {
-        "name": "Concussive Grenade",
-        "img": "/apps/dota2/images/dota_react/abilities/sniper_concussive_grenade.png"
-      },
-      {
-        "name": "Keen Scope",
-        "img": "/apps/dota2/images/dota_react/abilities/sniper_keen_scope.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Assassinate",
         "img": "/apps/dota2/images/dota_react/abilities/sniper_assassinate.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+50 Take Aim Passive Attack Range",
@@ -2097,21 +1940,13 @@
       {
         "name": "Heartstopper Aura",
         "img": "/apps/dota2/images/dota_react/abilities/necrolyte_heartstopper_aura.png"
-      },
-      {
-        "name": "Death Seeker",
-        "img": "/apps/dota2/images/dota_react/abilities/necrolyte_death_seeker.png"
-      },
-      {
-        "name": "Sadist",
-        "img": "/apps/dota2/images/dota_react/abilities/necrolyte_sadist.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Reaper's Scythe",
         "img": "/apps/dota2/images/dota_react/abilities/necrolyte_reapers_scythe.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "-2.5s Ghost Shroud Cooldown",
@@ -2235,17 +2070,13 @@
       {
         "name": "Drums of Slom",
         "img": "/apps/dota2/images/dota_react/abilities/beastmaster_drums_of_slom.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Primal Roar",
         "img": "/apps/dota2/images/dota_react/abilities/beastmaster_primal_roar.png"
       },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      }
-    ],
-    "ultimate": {},
     "talents": [
       {
         "name": "+5 Armor",
@@ -2296,21 +2127,13 @@
       {
         "name": "Scream Of Pain",
         "img": "/apps/dota2/images/dota_react/abilities/queenofpain_scream_of_pain.png"
-      },
-      {
-        "name": "Succubus",
-        "img": "/apps/dota2/images/dota_react/abilities/queenofpain_succubus.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Sonic Wave",
         "img": "/apps/dota2/images/dota_react/abilities/queenofpain_sonic_wave.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+35 Attack Speed against Shadow Striked units",
@@ -2361,21 +2184,13 @@
       {
         "name": "Plague Ward",
         "img": "/apps/dota2/images/dota_react/abilities/venomancer_plague_ward.png"
-      },
-      {
-        "name": "Poison Sting",
-        "img": "/apps/dota2/images/dota_react/abilities/venomancer_poison_sting.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Noxious Plague",
         "img": "/apps/dota2/images/dota_react/abilities/venomancer_noxious_plague.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "-5s Venomous Gale CD",
@@ -2426,21 +2241,13 @@
       {
         "name": "Time Lock",
         "img": "/apps/dota2/images/dota_react/abilities/faceless_void_time_lock.png"
-      },
-      {
-        "name": "Reverse Time Walk",
-        "img": "/apps/dota2/images/dota_react/abilities/faceless_void_time_walk_reverse.png"
-      },
-      {
-        "name": "Distortion Field",
-        "img": "/apps/dota2/images/dota_react/abilities/faceless_void_distortion_field.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Chronosphere",
         "img": "/apps/dota2/images/dota_react/abilities/faceless_void_chronosphere.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+6 Time Dilation DPS Per Cooldown",
@@ -2491,21 +2298,13 @@
       {
         "name": "Mortal Strike",
         "img": "/apps/dota2/images/dota_react/abilities/skeleton_king_mortal_strike.png"
-      },
-      {
-        "name": "Vampiric Spirit",
-        "img": "/apps/dota2/images/dota_react/abilities/skeleton_king_vampiric_spirit.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Reincarnation",
         "img": "/apps/dota2/images/dota_react/abilities/skeleton_king_reincarnation.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+8% Vampiric Spirit Lifesteal",
@@ -2556,21 +2355,13 @@
       {
         "name": "Spirit Siphon",
         "img": "/apps/dota2/images/dota_react/abilities/death_prophet_spirit_siphon.png"
-      },
-      {
-        "name": "Witchcraft",
-        "img": "/apps/dota2/images/dota_react/abilities/death_prophet_witchcraft.png"
-      },
-      {
-        "name": "generic_hidden",
-        "img": "/apps/dota2/images/dota_react/abilities/generic_hidden.png"
-      },
-      {
+      }
+      
+    ],
+    "ultimate": {
         "name": "Exorcism",
         "img": "/apps/dota2/images/dota_react/abilities/death_prophet_exorcism.png"
-      }
-    ],
-    "ultimate": {},
+      },
     "talents": [
       {
         "name": "+75 Silence AoE",
@@ -3069,6 +2860,62 @@
       },
       {
         "name": "+1 Weave Armor Reduction/Increase",
+        "level": 4
+      }
+    ]
+  },
+  "222": {
+    "name": "Сергуня",
+    "heroImg": "img/skill1.png",
+    "abilities": [
+      {
+        "name": "Отсос хуя",
+        "img": "img/skill1.png"
+      },
+      {
+        "name": "Анал",
+        "img": "img/skill1.png"
+      },
+      {
+        "name": "Фистинг",
+        "img": "img/skill1.png"
+      }
+    ],
+    "ultimate": {     
+        "name": "Игра сисечками",
+        "img": "img/skill1.png"
+    },
+    "talents": [
+      {
+        "name": "+2 яйца в рот",
+        "level": 1
+      },
+      {
+        "name": "+10см к рендже горла",
+        "level": 1
+      },
+      {
+        "name": "Увеличение груди",
+        "level": 2
+      },
+      {
+        "name": "Удаление 2 ребер",
+        "level": 2
+      },
+      {
+        "name": "+10 к гибкости",
+        "level": 3
+      },
+      {
+        "name": "+100 к СпермоРегену",
+        "level": 3
+      },
+      {
+        "name": "-20s перезарядки отсоса",
+        "level": 4
+      },
+      {
+        "name": "+50 к глубине очка",
         "level": 4
       }
     ]
@@ -8252,62 +8099,7 @@
       }
     ]
   },
-  "222": {
-    "name": "Сергуня",
-    "heroImg": "img/skill1.png",
-    "abilities": [
-      {
-        "name": "Отсос хуя",
-        "img": "img/skill1.png"
-      },
-      {
-        "name": "Анал",
-        "img": "img/skill1.png"
-      },
-      {
-        "name": "Фистинг",
-        "img": "img/skill1.png"
-      }
-    ],
-    "ultimate": {     
-        "name": "Игра сисечками",
-        "img": "img/skill1.png"
-    },
-    "talents": [
-      {
-        "name": "+2 яйца в рот",
-        "level": 1
-      },
-      {
-        "name": "+10см к рендже горла",
-        "level": 1
-      },
-      {
-        "name": "Увеличение груди",
-        "level": 2
-      },
-      {
-        "name": "Удаление 2 ребер",
-        "level": 2
-      },
-      {
-        "name": "+10 к гибкости",
-        "level": 3
-      },
-      {
-        "name": "+100 к СпермоРегену",
-        "level": 3
-      },
-      {
-        "name": "-20s перезарядки отсоса",
-        "level": 4
-      },
-      {
-        "name": "+50 к глубине очка",
-        "level": 4
-      }
-    ]
-  },
+
   "138": {
     "name": "Muerta",
     "heroImg": "/apps/dota2/images/dota_react/heroes/muerta.png?",
