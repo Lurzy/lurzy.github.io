@@ -17,8 +17,8 @@ export function initCursorGlow() {
   let mouseY = -1000;
   let targetX = -1000;
   let targetY = -1000;
-  const glowRadius = 250;       // радиус свечения
-  const glowIntensity = 0.15;   // максимальная непрозрачность (0..1)
+  const glowRadius = 150;       // радиус свечения
+  const glowIntensity = 0.08;   // максимальная непрозрачность (0..1)
 
   function resizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
