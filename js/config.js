@@ -14,7 +14,7 @@ export const GAY_HOVER_SOUND_FILE = 'click.mp3';
 
 // Списки предметов
 export const ALLOWED_ITEM_KEYS = new Set([
-  'soul_ring', 'orb_of_corrosion', 'falcon_blade', 'power_treads', 'phase_boots', 'travel_boots',
+  'soul_ring', 'falcon_blade', 'power_treads', 'phase_boots', 'travel_boots',
   'mask_of_madness', 'hand_of_midas', 'helm_of_the_dominator', 'moon_shard', 'helm_of_the_overlord', 'travel_boots_2',
   'urn_of_shadows', 'tranquil_boots', 'pavise', 'arcane_boots', 'drum', 'mekansm', 'vladmir', 'spirit_vessel',
   'pipe', 'guardian_greaves', 'crimson_guard', 'boots_of_bearing', 'holy_locket', 'solar_crest',
@@ -28,7 +28,7 @@ export const ALLOWED_ITEM_KEYS = new Set([
   'silver_edge', 'radiance', 'abyssal_blade', 'disperser', 'greater_crit',
   'dragon_lance', 'kaya_and_sange', 'harpoon', 'satanic', 'khanda', 'mjollnir', 'skadi', 'butterfly',
   'rapier', 'parasma', 'overwhelming_blink', 'swift_blink', 'arcane_blink', 'hydras_breath', 'blink',
-  'boots', 'aghanims_shard'
+  'boots', 'aghanims_shard', 'phylactery', 'gungir', 'angels_demise', 'crellas_crozier', 'revenants_brooch', 'devastator', 'consecrated_wraps'
 ]);
 
 export const BOOTS_ITEM_KEYS = new Set([
