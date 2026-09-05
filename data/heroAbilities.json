@@ -8275,35 +8275,35 @@
     },
     "talents": [
       {
-        "name": "+3 Health Regen",
+        "name": "+2 яйца в рот",
         "level": 1
       },
       {
-        "name": "+200 Mana Void Radius",
+        "name": "+10см к рендже горла",
         "level": 1
       },
       {
-        "name": "+9%/18% Persecutor Min/Max Movement Slow",
+        "name": "Увеличение груди",
         "level": 2
       },
       {
-        "name": "+0.2 Mana Void Damage Multiplier",
+        "name": "Удаление 2 ребер",
         "level": 2
       },
       {
-        "name": "+125 Blink Cast Range",
+        "name": "+10 к гибкости",
         "level": 3
       },
       {
-        "name": "+0.8s Mana Void Stun",
+        "name": "+100 к СпермоРегену",
         "level": 3
       },
       {
-        "name": "-1s Blink Cooldown",
+        "name": "-20s перезарядки отсоса",
         "level": 4
       },
       {
-        "name": "-50s Mana Void Cooldown",
+        "name": "+50 к глубине очка",
         "level": 4
       }
     ]
